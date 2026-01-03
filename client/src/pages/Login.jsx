@@ -30,56 +30,81 @@ function Login() {
   };
 
   return (
-    <div className="w-full max-w-md p-5">
-      <form 
-        className="bg-white p-10 rounded-lg shadow-lg"
-        onSubmit={handleSubmit}
-      >
-        <h2 className="mb-8 text-center text-gray-800 text-2xl font-semibold">Login</h2>
-        
-        {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-5 text-sm">
-            {error}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+            <h2 className="text-3xl font-bold text-white text-center">Welcome Back</h2>
+            <p className="text-blue-100 text-center mt-2">Sign in to your account</p>
           </div>
-        )}
-        
-        <div className="mb-5">
-          <label className="block mb-2 text-gray-800 text-sm font-medium">Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-3 py-3 border border-gray-300 rounded text-base outline-none focus:border-blue-500"
-            placeholder="Enter your username"
-          />
+          
+          <form className="p-8 space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-medium">{error}</span>
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Enter your username"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Enter your password"
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Logging in...
+                </span>
+              ) : (
+                'Login'
+              )}
+            </button>
+            
+            <div className="text-center pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition-colors">
+                  Register
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
-        
-        <div className="mb-5">
-          <label className="block mb-2 text-gray-800 text-sm font-medium">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-3 border border-gray-300 rounded text-base outline-none focus:border-blue-500"
-            placeholder="Enter your password"
-          />
-        </div>
-        
-        <button 
-          type="submit" 
-          className="w-full py-3 bg-blue-600 text-white rounded text-base font-medium cursor-pointer mt-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-        
-        <div className="mt-5 text-center text-sm text-gray-600">
-          <span>Don't have an account? </span>
-          <Link to="/register" className="text-blue-600 no-underline hover:underline">
-            Register
-          </Link>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,13 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import authRepository from './auth.repository.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadBaseDir = path.join(__dirname, '../../upload');
 
 const generateToken = (user) => {
   const payload = {
@@ -52,6 +59,16 @@ const register = async (username, password) => {
       passwordHash,
       isAdmin: isFirstUser // Первый пользователь автоматически становится админом
     });
+
+    // Создаем папку для пользователя в server/upload
+    try {
+      const userUploadDir = path.join(uploadBaseDir, normalizedUsername);
+      await fs.mkdir(userUploadDir, { recursive: true });
+      console.log(`Created upload directory for user: ${normalizedUsername}`);
+    } catch (dirError) {
+      console.error(`Error creating upload directory for user ${normalizedUsername}:`, dirError);
+      // Не прерываем создание пользователя, если папка не создалась
+    }
 
     console.log('User created successfully:', user.username);
     return generateToken(user);

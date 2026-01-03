@@ -29,11 +29,22 @@ const count = async () => {
   return await User.countDocuments();
 };
 
+const deleteById = async (userId) => {
+  try {
+    const result = await User.findByIdAndDelete(userId);
+    return result;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+};
+
 export default {
   findByUsername,
   create,
   findById,
   findAll,
-  count
+  count,
+  deleteById
 };
 
