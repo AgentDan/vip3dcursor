@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/auth.service';
 
 function Register() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,14 +13,14 @@ function Register() {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Email and password are required');
+    if (!username || !password) {
+      setError('Username and password are required');
       return;
     }
 
     setLoading(true);
     try {
-      await authService.register({ email, password });
+      await authService.register({ username, password });
       navigate('/home');
     } catch (err) {
       setError(err.message);
@@ -39,18 +39,26 @@ function Register() {
         
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-5 text-sm">
-            {error}
+            <div className="font-medium">{error}</div>
+            {error === 'User already exists' && (
+              <div className="mt-2">
+                <span>This username is already taken. </span>
+                <Link to="/login" className="text-blue-600 underline font-medium">
+                  Go to Login
+                </Link>
+              </div>
+            )}
           </div>
         )}
         
         <div className="mb-5">
-          <label className="block mb-2 text-gray-800 text-sm font-medium">Email</label>
+          <label className="block mb-2 text-gray-800 text-sm font-medium">Username</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full px-3 py-3 border border-gray-300 rounded text-base outline-none focus:border-blue-500"
-            placeholder="Enter your email"
+            placeholder="Enter your username"
           />
         </div>
         

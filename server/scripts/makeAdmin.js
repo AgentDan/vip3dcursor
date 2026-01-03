@@ -6,27 +6,29 @@ dotenv.config();
 
 const makeAdmin = async () => {
   try {
-    const email = process.argv[2];
+    const username = process.argv[2];
     
-    if (!email) {
-      console.error('Usage: node scripts/makeAdmin.js <email>');
+    if (!username) {
+      console.error('Usage: node scripts/makeAdmin.js <username>');
       process.exit(1);
     }
 
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arh3d');
+    // Убираем кавычки из MONGODB_URI, если они есть
+    const mongoUri = process.env.MONGODB_URI?.replace(/^["']|["']$/g, '') || 'mongodb://localhost:27017/arh3d';
+    await mongoose.connect(mongoUri);
     console.log('MongoDB connected');
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ username: username.toLowerCase().trim() });
     
     if (!user) {
-      console.error(`User with email ${email} not found`);
+      console.error(`User with username ${username} not found`);
       process.exit(1);
     }
 
     user.isAdmin = true;
     await user.save();
     
-    console.log(`User ${email} is now an admin`);
+    console.log(`User ${username} is now an admin`);
     process.exit(0);
   } catch (error) {
     console.error('Error:', error.message);

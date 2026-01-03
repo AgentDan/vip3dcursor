@@ -1,25 +1,25 @@
 const API_URL = '/api/admin';
 
-class AdminService {
-  async getUsers() {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch(`${API_URL}/users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch users');
+const getUsers = async () => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/users`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     }
+  });
 
-    return await response.json();
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch users');
   }
-}
 
-export default new AdminService();
+  return await response.json();
+};
+
+export default {
+  getUsers
+};
 

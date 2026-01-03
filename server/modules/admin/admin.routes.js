@@ -4,7 +4,7 @@ import { authenticate, isAdmin } from '../../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.get('/users', authenticate, isAdmin, adminController.getAllUsers.bind(adminController));
+router.get('/users', authenticate, isAdmin, adminController.getAllUsers);
 
 export default router;
 

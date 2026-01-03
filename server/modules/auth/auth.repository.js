@@ -1,27 +1,39 @@
 import User from './auth.model.js';
 
-class AuthRepository {
-  async findByEmail(email) {
-    return await User.findOne({ email: email.toLowerCase() });
-  }
+const findByUsername = async (username) => {
+  // Username уже должен быть нормализован, но на всякий случай нормализуем еще раз
+  const normalizedUsername = username.toLowerCase().trim();
+  return await User.findOne({ username: normalizedUsername });
+};
 
-  async create(userData) {
+const create = async (userData) => {
+  try {
     const user = new User(userData);
     return await user.save();
+  } catch (error) {
+    // Логируем ошибку создания для отладки
+    console.error('Error creating user:', error);
+    throw error;
   }
+};
 
-  async findById(userId) {
-    return await User.findById(userId);
-  }
+const findById = async (userId) => {
+  return await User.findById(userId);
+};
 
-  async findAll() {
-    return await User.find({}).select('-passwordHash');
-  }
+const findAll = async () => {
+  return await User.find({}).select('-passwordHash');
+};
 
-  async count() {
-    return await User.countDocuments();
-  }
-}
+const count = async () => {
+  return await User.countDocuments();
+};
 
-export default new AuthRepository();
+export default {
+  findByUsername,
+  create,
+  findById,
+  findAll,
+  count
+};
 

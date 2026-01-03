@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 import authRoutes from './modules/auth/auth.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 
-dotenv.config();
+// Загружаем переменные окружения с указанием пути
+dotenv.config({ path: './.env' });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/arh3d')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 

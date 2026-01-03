@@ -1,16 +1,16 @@
 import authRepository from '../auth/auth.repository.js';
 
-class AdminService {
-  async getAllUsers() {
-    const users = await authRepository.findAll();
-    return users.map(user => ({
-      id: user._id.toString(),
-      email: user.email,
-      isAdmin: user.isAdmin || false,
-      createdAt: user.createdAt
-    }));
-  }
-}
+const getAllUsers = async () => {
+  const users = await authRepository.findAll();
+  return users.map(user => ({
+    id: user._id.toString(),
+    username: user.username,
+    isAdmin: user.isAdmin || false,
+    createdAt: user.createdAt
+  }));
+};
 
-export default new AdminService();
+export default {
+  getAllUsers
+};
 

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/auth.service';
 
 function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,14 +13,14 @@ function Login() {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Email and password are required');
+    if (!username || !password) {
+      setError('Username and password are required');
       return;
     }
 
     setLoading(true);
     try {
-      await authService.login({ email, password });
+      await authService.login({ username, password });
       navigate('/home');
     } catch (err) {
       setError(err.message);
@@ -44,13 +44,13 @@ function Login() {
         )}
         
         <div className="mb-5">
-          <label className="block mb-2 text-gray-800 text-sm font-medium">Email</label>
+          <label className="block mb-2 text-gray-800 text-sm font-medium">Username</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full px-3 py-3 border border-gray-300 rounded text-base outline-none focus:border-blue-500"
-            placeholder="Enter your email"
+            placeholder="Enter your username"
           />
         </div>
         
