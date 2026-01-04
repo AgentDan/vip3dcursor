@@ -30,12 +30,12 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-6">
-            <h2 className="text-3xl font-bold text-white text-center">Create Account</h2>
-            <p className="text-purple-100 text-center mt-2">Join us today</p>
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-800/5 via-gray-800/5 to-slate-800/5 backdrop-blur-sm border-b border-gray-200/30 px-8 py-8">
+            <h2 className="text-4xl font-light text-gray-900 text-center tracking-tight">Create Account</h2>
+            <p className="text-gray-600 text-center mt-3 text-sm font-light">Join us today</p>
           </div>
           
           <form className="p-8 space-y-6" onSubmit={handleSubmit}>
@@ -54,34 +54,34 @@ function Register() {
             )}
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs font-light text-gray-600 mb-2 uppercase tracking-wider">
                 Username
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-300/50 rounded-lg text-base outline-none transition-all focus:border-gray-400 focus:bg-white/80 font-light text-gray-900 placeholder:text-gray-400"
                 placeholder="Choose a username"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-xs font-light text-gray-600 mb-2 uppercase tracking-wider">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-base outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border border-gray-300/50 rounded-lg text-base outline-none transition-all focus:border-gray-400 focus:bg-white/80 font-light text-gray-900 placeholder:text-gray-400"
                 placeholder="Create a password"
               />
             </div>
             
             <button 
               type="submit" 
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3.5 bg-gray-900 text-white rounded-lg text-sm font-light uppercase tracking-wider shadow-md hover:bg-gray-800 hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? (
@@ -97,10 +97,10 @@ function Register() {
               )}
             </button>
             
-            <div className="text-center pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
+            <div className="text-center pt-6 border-t border-gray-200/50">
+              <p className="text-xs text-gray-500 font-light">
                 Already have an account?{' '}
-                <Link to="/login" className="text-purple-600 font-semibold hover:text-purple-700 hover:underline transition-colors">
+                <Link to="/login" className="text-gray-900 font-normal hover:underline transition-colors">
                   Login
                 </Link>
               </p>

@@ -86,10 +86,21 @@ const deleteFile = async (req, res) => {
   }
 };
 
+const getAllFilesWithOwners = async (req, res) => {
+  try {
+    const files = await uploadService.getAllFilesWithOwners();
+    res.status(200).json(files);
+  } catch (error) {
+    console.error('Get all files error:', error);
+    res.status(500).json({ error: 'Failed to fetch files' });
+  }
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
   getUploadedFiles,
+  getAllFilesWithOwners,
   deleteFile
 };
 

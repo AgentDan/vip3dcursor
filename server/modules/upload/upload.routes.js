@@ -74,6 +74,9 @@ router.post('/file/user/:username', authenticate, upload.single('file'), uploadC
 // Получить список загруженных файлов (требует аутентификации)
 router.get('/files', authenticate, uploadController.getUploadedFiles);
 
+// Получить все файлы со всех пользователей (требует аутентификации)
+router.get('/files/all', authenticate, uploadController.getAllFilesWithOwners);
+
 // Удалить файл (требует аутентификации)
 router.delete('/file/:filename', authenticate, uploadController.deleteFile);
 

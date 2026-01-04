@@ -22,3 +22,11 @@ export const isAdmin = () => {
   return decoded?.isAdmin === true;
 };
 
+export const getUsername = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  
+  const decoded = decodeToken(token);
+  return decoded?.username || null;
+};
+

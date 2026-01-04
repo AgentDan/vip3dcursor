@@ -66,6 +66,25 @@ const getFiles = async () => {
   return await response.json();
 };
 
+const getAllFilesWithOwners = async () => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/files/all`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch all files');
+  }
+
+  return await response.json();
+};
+
 const deleteFile = async (filename) => {
   const token = localStorage.getItem('token');
   
@@ -89,6 +108,7 @@ export default {
   uploadFile,
   uploadFileToUser,
   getFiles,
+  getAllFilesWithOwners,
   deleteFile
 };
 
