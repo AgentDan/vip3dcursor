@@ -20,7 +20,7 @@ const HeaderMain = () => {
           <div className="flex-shrink-0">
             <h1 className="text-lg sm:text-xl font-light text-black tracking-tight">Vicenzo BOATS</h1>
             {authenticated && username && (
-              <p className="text-white/80 text-xs font-light">Logged in as {username}</p>
+              <p className="text-black text-xs font-light">Logged in as <span className="font-medium">{username}</span></p>
             )}
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
