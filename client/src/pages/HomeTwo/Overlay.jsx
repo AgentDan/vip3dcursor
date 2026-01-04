@@ -16,15 +16,15 @@ const Overlay = () => {
                     </div>
                     <div className="container mx-auto max-w-6xl relative z-10">
                         <div className="text-center mb-12">
-                            <h2 className="text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-4" style={{textShadow: '0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255,255,255,0.7), 0 2px 6px rgba(255,255,255,0.5)'}}>
+                            <h2 className="text-4xl mt-10 md:text-5xl font-light text-gray-900 tracking-tight mb-4" style={{textShadow: '0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255,255,255,0.7), 0 2px 6px rgba(255,255,255,0.5)'}}>
                                 OUR PHILOSOPHY
                             </h2>
                             <p className="text-xl font-light text-gray-800 italic" style={{textShadow: '0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.6), 0 1px 4px rgba(255,255,255,0.4)'}}>Precision Through Pre-Modeling</p>
                         </div>
 
-                        <div className="backdrop-blur-[3px] rounded-2xl border border-white/10 p-8 md:p-12 mb-8">
+                        <div className="backdrop-blur-[3px] rounded-2xl border border-white/10 p1 md:p-12 mb-4">
                             <div className="max-w-4xl mx-auto">
-                                <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-6 text-center" style={{textShadow: '0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.6), 0 2px 5px rgba(255,255,255,0.4)'}}>
+                                <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-1 text-center" style={{textShadow: '0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.6), 0 2px 5px rgba(255,255,255,0.4)'}}>
                                     The Art of Pre-Modeling in Yacht Design
                                 </h3>
                                 <p className="text-base md:text-lg font-light text-gray-800 leading-relaxed mb-6 text-center" style={{textShadow: '0 0 8px rgba(255,255,255,0.7), 0 0 16px rgba(255,255,255,0.5), 0 1px 3px rgba(255,255,255,0.3)'}}>
@@ -134,7 +134,7 @@ const Overlay = () => {
                 </section>
 
                 {/* Section 5 - Roof */}
-                <section className="relative h-screen flex items-center justify-center px-4">
+                <section className="relative h-screen flex items-start justify-center px-4 pt-[10vh]">
                     <div className="absolute top-4 left-4 z-20 pointer-events-none">
                         <span className="text-xs font-light text-white/90 uppercase tracking-wider bg-black/30 backdrop-blur-[1px] px-4 py-2 rounded border border-white/20">
                             <span className="font-bold text-white text-sm mr-2">5</span>

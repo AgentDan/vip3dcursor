@@ -13,12 +13,12 @@ const BackgroundController = () => {
         // Создаем GSAP timeline для анимации background
         tl.current = gsap.timeline({ defaults: { duration: 2, ease: "power1.inOut" } });
         
-        // Анимация background на красный с позиции 7 до 12
+        // Анимация background на RGB(152, 156, 162) с позиции 7 до 12
         tl.current
             .to(bgColorRef.current, {
-                r: 0.8, // Красный компонент
-                g: 0.2, // Зеленый компонент
-                b: 0.2, // Синий компонент
+                r: 0.596, // Красный компонент (152/255)
+                g: 0.612, // Зеленый компонент (156/255)
+                b: 0.635, // Синий компонент (162/255)
                 duration: 5, // 12 - 7 = 5 секунд
             }, 7) // Начинаем с позиции 7
             .to(bgColorRef.current, {

@@ -402,50 +402,34 @@ function Admin() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        <th className="px-2 py-1.5 text-left text-[10px] font-bold text-gray-700 uppercase tracking-wider">
                           Username
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                          Actions
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
                       {users.map((user, index) => (
                         <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-                                {user.username.charAt(0).toUpperCase()}
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center text-white font-semibold text-[10px] ${
+                                user.isAdmin 
+                                  ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
+                                  : 'bg-gradient-to-br from-blue-400 to-cyan-400'
+                              }`}>
+                                {user.isAdmin ? 'A' : 'U'}
                               </div>
-                              <span className="text-sm font-medium text-gray-900">{user.username}</span>
+                              <span className="text-xs font-medium text-gray-900 flex-1">{user.username}</span>
+                              <button
+                                onClick={() => handleDeleteUser(user.id, user.username)}
+                                className="p-0.5 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                                title="Delete user"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {user.isAdmin ? (
-                              <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
-                                Admin
-                              </span>
-                            ) : (
-                              <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
-                                User
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <button
-                              onClick={() => handleDeleteUser(user.id, user.username)}
-                              className="px-3 py-1.5 bg-gray-900/10 text-gray-700 rounded-lg hover:bg-gray-900/20 hover:shadow-sm transition-all font-light text-xs uppercase tracking-wider flex items-center cursor-pointer border border-gray-300/20"
-                              title="Delete user"
-                            >
-                              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Delete
-                            </button>
                           </td>
                         </tr>
                       ))}
@@ -462,8 +446,6 @@ function Admin() {
                     <h2 className="text-2xl sm:text-3xl font-light text-gray-900 tracking-tight">All Files</h2>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <label className="text-xs sm:text-sm font-light text-gray-700 uppercase tracking-wider hidden sm:inline">Filter by Owner:</label>
-                        <label className="text-xs sm:text-sm font-light text-gray-700 uppercase tracking-wider sm:hidden">Filter:</label>
                         <select
                           value={selectedOwner}
                           onChange={(e) => setSelectedOwner(e.target.value)}
@@ -615,8 +597,8 @@ function Admin() {
                       </div>
                     ) : (
                       <div className="overflow-x-auto rounded-xl border border-gray-200">
-                        <div className="mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-700">
+                        <div className="mb-2 px-2 py-1 bg-blue-50 border border-blue-200 rounded">
+                          <p className="text-xs text-blue-700">
                             Showing <span className="font-semibold">{filteredFiles.length}</span> of <span className="font-semibold">{files.length}</span> files
                             {selectedOwner !== 'all' && (
                               <span> for {selectedOwner === 'no-owner' ? 'files without owner' : `owner "${selectedOwner}"`}</span>
@@ -626,16 +608,16 @@ function Admin() {
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                             <tr>
-                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                              <th className="px-2 py-1.5 text-left text-[10px] font-bold text-gray-700 uppercase tracking-wider">
                                 Filename
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                              <th className="px-2 py-1.5 text-left text-[10px] font-bold text-gray-700 uppercase tracking-wider">
                                 Owner
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                              <th className="px-2 py-1.5 text-left text-[10px] font-bold text-gray-700 uppercase tracking-wider">
                                 Size
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                              <th className="px-2 py-1.5 text-left text-[10px] font-bold text-gray-700 uppercase tracking-wider">
                                 Actions
                               </th>
                             </tr>
@@ -643,41 +625,41 @@ function Admin() {
                           <tbody className="bg-white divide-y divide-gray-100">
                             {filteredFiles.map((file, index) => (
                             <tr key={`${file.username || 'no-owner'}-${file.filename}-${index}`} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-2 py-1.5 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center text-white font-semibold mr-3 text-xs">
+                                  <div className="flex-shrink-0 h-6 w-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded flex items-center justify-center text-white font-semibold mr-1.5 text-[8px]">
                                     {file.filename.split('.').pop()?.toUpperCase().slice(0, 3) || 'FILE'}
                                   </div>
                                   <div>
-                                    <div className="text-sm font-medium text-gray-900">{file.filename}</div>
-                                    <div className="text-xs text-gray-500 truncate max-w-xs">{file.url}</div>
+                                    <div className="text-xs font-medium text-gray-900">{file.filename}</div>
+                                    <div className="text-[10px] text-gray-500 truncate max-w-xs">{file.url}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-2 py-1.5 whitespace-nowrap">
                                 {file.username ? (
                                   <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold mr-2 text-xs">
+                                    <div className="flex-shrink-0 h-5 w-5 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold mr-1.5 text-[8px]">
                                       {file.username.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="text-sm font-medium text-gray-900">{file.username}</span>
+                                    <span className="text-xs font-medium text-gray-900">{file.username}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-sm text-gray-400 italic">No owner</span>
+                                  <span className="text-xs text-gray-400 italic">No owner</span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
                                 {formatFileSize(file.size)}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <td className="px-2 py-1.5 whitespace-nowrap">
                                 <a
                                   href={`http://127.0.0.1:3000${file.url}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 hover:scale-105 hover:shadow-md transition-all font-medium text-xs inline-flex items-center cursor-pointer"
+                                  className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
                                   title="Open file"
                                 >
-                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                   </svg>
                                   Open
