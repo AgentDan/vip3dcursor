@@ -106,12 +106,17 @@ function Model3D() {
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
       {/* Overlay Controls - Top Right */}
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col items-end gap-2">
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col items-end gap-3">
         <button
           onClick={() => navigate('/home')}
-          className="px-2.5 py-1.5 bg-black/60 backdrop-blur-md text-white rounded border border-white/30 hover:bg-black/80 hover:border-white/50 transition-all font-light text-xs uppercase tracking-wider cursor-pointer whitespace-nowrap"
+          className="px-4 py-2.5 bg-white/10 backdrop-blur-[5px] text-white rounded-lg border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all font-light text-xs sm:text-sm uppercase tracking-wider cursor-pointer whitespace-nowrap shadow-lg hover:shadow-xl"
         >
-          Home
+          <span className="flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Home
+          </span>
         </button>
         {userFiles.length > 0 && !loading && (
           <select
@@ -132,7 +137,7 @@ function Model3D() {
                 }
               }
             }}
-            className="px-2 py-1.5 bg-black/60 backdrop-blur-md text-white rounded border border-white/30 outline-none transition-all focus:border-white/50 focus:bg-black/70 font-light text-xs cursor-pointer"
+            className="px-5 py-3 bg-white/20 backdrop-blur-[10px] text-white rounded-xl border-2 border-white/40 outline-none transition-all focus:border-white/60 focus:bg-white/30 hover:bg-white/25 hover:border-white/50 font-medium text-sm sm:text-base cursor-pointer shadow-2xl hover:shadow-2xl hover:scale-105 active:scale-100 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1.5em] bg-[right_1rem_center] bg-no-repeat pr-12 min-w-[180px]"
           >
             {userFiles.map((file, index) => (
               <option

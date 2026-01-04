@@ -158,6 +158,12 @@ function Admin() {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  // Проверяем, является ли пользователь администратором
+  const isUserAdmin = (username) => {
+    const user = users.find(u => u.username === username);
+    return user ? user.isAdmin : false;
+  };
+
   // Получаем уникальных владельцев из списка файлов
   const getUniqueOwners = () => {
     const owners = new Set();
@@ -639,8 +645,12 @@ function Admin() {
                               <td className="px-2 py-1.5 whitespace-nowrap">
                                 {file.username ? (
                                   <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-5 w-5 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold mr-1.5 text-[8px]">
-                                      {file.username.charAt(0).toUpperCase()}
+                                    <div className={`flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center text-white font-semibold mr-1.5 text-[10px] ${
+                                      isUserAdmin(file.username)
+                                        ? 'bg-gradient-to-br from-purple-500 to-pink-500'
+                                        : 'bg-gradient-to-br from-blue-400 to-cyan-400'
+                                    }`}>
+                                      {isUserAdmin(file.username) ? 'A' : 'U'}
                                     </div>
                                     <span className="text-xs font-medium text-gray-900">{file.username}</span>
                                   </div>
