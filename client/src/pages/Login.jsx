@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import authService from '../services/auth.service';
 
 function Login() {
@@ -33,7 +33,7 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 px-4 py-12">
       <div className="w-full max-w-md">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-slate-800/5 via-gray-800/5 to-slate-800/5 backdrop-blur-sm border-b border-gray-200/30 px-8 py-8">
+          <div className="bg-gradient-to-r from-slate-800/10 via-gray-800/10 to-slate-800/10 backdrop-blur-[5px] border-b border-gray-200/30 px-8 py-8">
             <h2 className="text-4xl font-light text-gray-900 text-center tracking-tight">Welcome Back</h2>
             <p className="text-gray-600 text-center mt-3 text-sm font-light">Sign in to your account</p>
           </div>
@@ -78,7 +78,7 @@ function Login() {
             
             <button 
               type="submit" 
-              className="w-full py-3.5 bg-gray-900 text-white rounded-lg text-sm font-light uppercase tracking-wider shadow-md hover:bg-gray-800 hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 bg-gray-900 text-white rounded-lg text-sm font-light uppercase tracking-wider shadow-md hover:bg-gray-800 hover:shadow-lg transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? (
@@ -94,14 +94,18 @@ function Login() {
               )}
             </button>
             
-            <div className="text-center pt-6 border-t border-gray-200/50">
-              <p className="text-xs text-gray-500 font-light">
-                Don't have an account?{' '}
-                <Link to="/register" className="text-gray-900 font-normal hover:underline transition-colors">
-                  Register
-                </Link>
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/home')}
+              className="w-full py-3.5 bg-white/70 backdrop-blur-md text-gray-900 rounded-lg text-sm font-light uppercase tracking-wider border border-gray-300/30 hover:bg-white/90 hover:shadow-md transition-all cursor-pointer"
+            >
+              <span className="flex items-center justify-center">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Home
+              </span>
+            </button>
           </form>
         </div>
       </div>

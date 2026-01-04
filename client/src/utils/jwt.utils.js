@@ -30,3 +30,17 @@ export const getUsername = () => {
   return decoded?.username || null;
 };
 
+export const isAuthenticated = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+  
+  const decoded = decodeToken(token);
+  // Check if token is not expired (basic check - token should have exp field)
+  if (decoded && decoded.exp) {
+    const currentTime = Date.now() / 1000;
+    return decoded.exp > currentTime;
+  }
+  // If no exp field, assume token is valid if decoded successfully
+  return decoded !== null;
+};
+

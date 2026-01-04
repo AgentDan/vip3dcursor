@@ -33,7 +33,7 @@ function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 px-4 py-12">
       <div className="w-full max-w-md">
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden">
-          <div className="bg-gradient-to-r from-slate-800/5 via-gray-800/5 to-slate-800/5 backdrop-blur-sm border-b border-gray-200/30 px-8 py-8">
+          <div className="bg-gradient-to-r from-slate-800/10 via-gray-800/10 to-slate-800/10 backdrop-blur-[5px] border-b border-gray-200/30 px-8 py-8">
             <h2 className="text-4xl font-light text-gray-900 text-center tracking-tight">Create Account</h2>
             <p className="text-gray-600 text-center mt-3 text-sm font-light">Join us today</p>
           </div>

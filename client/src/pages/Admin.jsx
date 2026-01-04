@@ -193,26 +193,39 @@ function Admin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden">
-            <div className="bg-gradient-to-r from-slate-800/5 via-gray-800/5 to-slate-800/5 backdrop-blur-sm border-b border-gray-200/30 px-10 py-8">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-5xl font-light text-gray-900 tracking-tight mb-2">Admin Panel</h1>
-                  <p className="text-gray-600 text-sm font-light">Manage all users in the system</p>
+            <div className="bg-gradient-to-r from-slate-800/10 via-gray-800/10 to-slate-800/10 backdrop-blur-[5px] border-b border-gray-200/30 px-4 sm:px-6 md:px-10 py-4 sm:py-6 md:py-8">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
+                <div className="flex-shrink-0">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-light text-gray-900 tracking-tight mb-2">Admin Panel</h1>
+                  <p className="text-gray-600 text-xs sm:text-sm font-light">Manage all users in the system</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
+                  <button
+                    onClick={() => navigate('/model')}
+                    className="px-3 sm:px-5 py-2 sm:py-2.5 bg-white/70 backdrop-blur-md text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-gray-300/30 cursor-pointer flex-shrink-0"
+                    title="View 3D Models"
+                  >
+                    <span className="flex items-center whitespace-nowrap">
+                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      <span className="hidden sm:inline">3D Viewer</span>
+                      <span className="sm:hidden">3D</span>
+                    </span>
+                  </button>
                   <button
                     onClick={() => navigate('/home')}
-                    className="px-5 py-2.5 bg-white/70 backdrop-blur-md text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-sm uppercase tracking-wider border border-gray-300/30 cursor-pointer"
+                    className="px-3 sm:px-5 py-2 sm:py-2.5 bg-white/70 backdrop-blur-md text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-gray-300/30 cursor-pointer flex-shrink-0 whitespace-nowrap"
                     title="Go to home page"
                   >
                     Home
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="px-5 py-2.5 bg-gray-900/90 backdrop-blur-md text-white rounded-lg hover:bg-gray-900 hover:shadow-md transition-all font-light text-sm uppercase tracking-wider border border-gray-800/50 cursor-pointer"
+                    className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-900/90 backdrop-blur-md text-white rounded-lg hover:bg-gray-900 hover:shadow-md transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-gray-800/50 cursor-pointer flex-shrink-0 whitespace-nowrap"
                     title="Logout from admin panel"
                   >
                     Logout
@@ -221,7 +234,7 @@ function Admin() {
               </div>
             </div>
 
-            <div className="p-8">
+            <div className="p-4 sm:p-6 md:p-8">
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg mb-6">
                   <div className="flex items-center">
@@ -234,15 +247,15 @@ function Admin() {
               )}
 
               {/* Tabs */}
-              <div className="mb-8 border-b border-gray-200/50">
-                <nav className="flex space-x-12">
+              <div className="mb-6 sm:mb-8 border-b border-gray-200/50">
+                <nav className="flex space-x-4 sm:space-x-8 md:space-x-12">
                   <button
                     onClick={() => {
                       setActiveTab('users');
                       setShowCreateForm(false);
                       setShowUploadForm(false);
                     }}
-                    className={`py-4 px-1 border-b-2 font-light text-sm uppercase tracking-wider transition-colors cursor-pointer ${
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
                       activeTab === 'users'
                         ? 'border-gray-900 text-gray-900'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -257,7 +270,7 @@ function Admin() {
                       setShowUploadForm(false); // Скрываем форму загрузки при переключении
                       fetchAllFiles();
                     }}
-                    className={`py-4 px-1 border-b-2 font-light text-sm uppercase tracking-wider transition-colors cursor-pointer ${
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
                       activeTab === 'files'
                         ? 'border-gray-900 text-gray-900'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -270,20 +283,21 @@ function Admin() {
 
               {activeTab === 'users' && (
                 <>
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-3xl font-light text-gray-900 tracking-tight">All Users</h2>
-                  <div className="flex items-center gap-3">
+              <div className="mb-6 sm:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-light text-gray-900 tracking-tight">All Users</h2>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <button
                     onClick={refreshUsers}
-                    className="px-4 py-2 bg-white/70 backdrop-blur-sm text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider border border-gray-300/30 cursor-pointer"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/70 backdrop-blur-sm text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider border border-gray-300/30 cursor-pointer flex-shrink-0"
                     title="Refresh users list"
                   >
-                    <span className="flex items-center">
-                      <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="flex items-center whitespace-nowrap">
+                      <svg className="w-3.5 h-3.5 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      Refresh
+                      <span className="hidden sm:inline">Refresh</span>
+                      <span className="sm:hidden">↻</span>
                     </span>
                   </button>
                   <button
@@ -291,17 +305,18 @@ function Admin() {
                       setShowUploadForm(false);
                       setShowCreateForm(!showCreateForm);
                     }}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider cursor-pointer"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider cursor-pointer flex-shrink-0 whitespace-nowrap"
                     title="Create new user"
                   >
-                      <span className="flex items-center">
-                        <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-                        </svg>
-                        {showCreateForm ? 'Cancel' : 'Create User'}
-                      </span>
+                    <span className="flex items-center">
+                      <svg className="w-3.5 h-3.5 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span className="hidden sm:inline">{showCreateForm ? 'Cancel' : 'Create User'}</span>
+                      <span className="sm:hidden">{showCreateForm ? 'Cancel' : 'Create'}</span>
+                    </span>
                   </button>
-                    <div className="bg-gray-900/5 text-gray-700 px-4 py-2 rounded-full text-xs font-light uppercase tracking-wider border border-gray-300/30">
+                    <div className="bg-gray-900/5 text-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-light uppercase tracking-wider border border-gray-300/30 flex-shrink-0 whitespace-nowrap">
                       {users.length} {users.length === 1 ? 'User' : 'Users'}
                     </div>
                   </div>
@@ -442,20 +457,21 @@ function Admin() {
               )}
 
               {activeTab === 'files' && (
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800">All Files</h2>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-gray-700">Filter by Owner:</label>
+                <div className="mb-6 sm:mb-8">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
+                    <h2 className="text-2xl sm:text-3xl font-light text-gray-900 tracking-tight">All Files</h2>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <label className="text-xs sm:text-sm font-light text-gray-700 uppercase tracking-wider hidden sm:inline">Filter by Owner:</label>
+                        <label className="text-xs sm:text-sm font-light text-gray-700 uppercase tracking-wider sm:hidden">Filter:</label>
                         <select
                           value={selectedOwner}
                           onChange={(e) => setSelectedOwner(e.target.value)}
-                          className="px-4 py-2 border-2 border-gray-200 rounded-lg text-sm outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300/50 rounded-lg text-xs sm:text-sm outline-none transition-all focus:border-gray-500 focus:ring-1 focus:ring-gray-300 bg-white/70 text-gray-800 cursor-pointer"
                         >
                           <option value="all">All Owners</option>
                           <option value="no-owner">No Owner</option>
-                          {getUniqueOwners().map((owner) => (
+                          {getUniqueOwners().filter(o => o !== 'all' && o !== 'no-owner').map((owner) => (
                             <option key={owner} value={owner}>
                               {owner}
                             </option>
@@ -464,15 +480,16 @@ function Admin() {
                       </div>
                       <button
                         onClick={fetchAllFiles}
-                        className="px-4 py-2 bg-white/70 backdrop-blur-sm text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider border border-gray-300/30 cursor-pointer disabled:cursor-not-allowed"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/70 backdrop-blur-sm text-gray-900 rounded-lg hover:bg-white/90 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider border border-gray-300/30 cursor-pointer disabled:cursor-not-allowed flex-shrink-0"
                         disabled={filesLoading}
                         title="Refresh files list"
                       >
-                        <span className="flex items-center">
-                          <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="flex items-center whitespace-nowrap">
+                          <svg className="w-3.5 h-3.5 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                           </svg>
-                          {filesLoading ? 'Loading...' : 'Refresh'}
+                          <span className="hidden sm:inline">{filesLoading ? 'Loading...' : 'Refresh'}</span>
+                          <span className="sm:hidden">↻</span>
                         </span>
                       </button>
                       <button
@@ -480,14 +497,15 @@ function Admin() {
                           setShowCreateForm(false);
                           setShowUploadForm(!showUploadForm);
                         }}
-                        className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider cursor-pointer"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 hover:shadow-md transition-all font-light text-xs uppercase tracking-wider cursor-pointer flex-shrink-0 whitespace-nowrap"
                         title="Upload file to user folder"
                       >
                         <span className="flex items-center">
-                          <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3.5 h-3.5 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          {showUploadForm ? 'Cancel Upload' : 'Upload File'}
+                          <span className="hidden sm:inline">{showUploadForm ? 'Cancel Upload' : 'Upload File'}</span>
+                          <span className="sm:hidden">{showUploadForm ? 'Cancel' : 'Upload'}</span>
                         </span>
                       </button>
                     </div>
