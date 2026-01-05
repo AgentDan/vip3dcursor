@@ -6,6 +6,7 @@ import { Leva } from 'leva';
 import { getUsername, isAdmin } from '../utils/jwt.utils';
 import uploadService from '../services/upload.service';
 import BackgroundLightControls from '../components/LevaControls/leva.jsx';
+import { getFileUrl } from '../utils/config';
 
 function Model({ url, onLoad }) {
   const { scene } = useGLTF(url);
@@ -66,7 +67,7 @@ function Model3D() {
           setSelectedModel(firstFile);
           setModelLoading(true);
           setTimeout(() => {
-            const fullUrl = `http://127.0.0.1:3000${firstFile.url}?t=${Date.now()}`;
+            const fullUrl = `${getFileUrl(firstFile.url)}?t=${Date.now()}`;
             setModelUrl(fullUrl);
           }, 50);
         } else {
@@ -101,7 +102,7 @@ function Model3D() {
     
     // Используем setTimeout для гарантии, что состояние сброшено перед установкой нового URL
     setTimeout(() => {
-      const fullUrl = `http://127.0.0.1:3000${file.url}?t=${Date.now()}`;
+      const fullUrl = `${getFileUrl(file.url)}?t=${Date.now()}`;
       setModelUrl(fullUrl);
     }, 50);
   };

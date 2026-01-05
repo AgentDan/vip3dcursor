@@ -1,0 +1,11 @@
+{
+  "visible": {
+    "nodeName1": true,
+    "nodeName2": false
+  },
+  "materials": {
+    "nodeName1": "materialName1",
+    "nodeName2": "materialName2"
+  }
+}
+

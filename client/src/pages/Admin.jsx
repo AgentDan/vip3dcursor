@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminService from '../services/admin.service';
 import uploadService from '../services/upload.service';
+import { getFileUrl } from '../utils/config';
 
 function Admin() {
   const [users, setUsers] = useState([]);
@@ -103,19 +104,15 @@ function Admin() {
     }
   };
 
-  const handleDeleteFile = async (filename, username) => {
+  const handleDeleteFile = async (filename) => {
     if (!window.confirm(`Are you sure you want to delete file "${filename}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      await uploadService.deleteFile(filename, username || null);
-      // Удаляем файл из списка по уникальной комбинации filename и username
-      setFiles(files.filter(file => {
-        const fileUsername = file.username || null;
-        const deleteUsername = username || null;
-        return !(file.filename === filename && fileUsername === deleteUsername);
-      }));
+      await uploadService.deleteFile(filename);
+      // Удаляем файл из списка
+      setFiles(files.filter(file => file.filename !== filename));
       setError('');
     } catch (err) {
       setError(err.message);
@@ -683,7 +680,7 @@ function Admin() {
                               <td className="px-2 py-1.5 whitespace-nowrap">
                                 <div className="flex items-center gap-1.5">
                                   <a
-                                    href={`http://127.0.0.1:3000${file.url}`}
+                                    href={getFileUrl(file.url)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
@@ -695,7 +692,7 @@ function Admin() {
                                     Open
                                   </a>
                                   <button
-                                    onClick={() => handleDeleteFile(file.filename, file.username)}
+                                    onClick={() => handleDeleteFile(file.filename)}
                                     className="px-2 py-0.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
                                     title="Delete file"
                                   >
