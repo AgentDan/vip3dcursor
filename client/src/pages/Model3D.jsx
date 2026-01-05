@@ -2,8 +2,10 @@ import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, useGLTF } from '@react-three/drei';
 import { useNavigate } from 'react-router-dom';
-import { getUsername } from '../utils/jwt.utils';
+import { Leva } from 'leva';
+import { getUsername, isAdmin } from '../utils/jwt.utils';
 import uploadService from '../services/upload.service';
+import BackgroundLightControls from './LevaControls/leva.jsx';
 
 function Model({ url, onLoad }) {
   const { scene } = useGLTF(url);
@@ -34,6 +36,7 @@ function Model3D() {
   const [selectedModel, setSelectedModel] = useState(null);
   const navigate = useNavigate();
   const username = getUsername();
+  const userIsAdmin = isAdmin();
 
   useEffect(() => {
     const fetchUserFiles = async () => {
@@ -105,6 +108,9 @@ function Model3D() {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
+      {/* Leva Panel - только для администраторов */}
+      {userIsAdmin && <Leva collapsed={false} />}
+      
       {/* Overlay Controls - Top Right */}
       <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col items-end gap-3">
         <button
@@ -137,7 +143,7 @@ function Model3D() {
                 }
               }
             }}
-            className="px-5 py-3 bg-white/20 backdrop-blur-[10px] text-white rounded-xl border-2 border-white/40 outline-none transition-all focus:border-white/60 focus:bg-white/30 hover:bg-white/25 hover:border-white/50 font-medium text-sm sm:text-base cursor-pointer shadow-2xl hover:shadow-2xl hover:scale-105 active:scale-100 appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1.5em] bg-[right_1rem_center] bg-no-repeat pr-12 min-w-[180px]"
+            className="px-4 py-2.5 bg-white/10 backdrop-blur-[5px] text-white rounded-lg border border-white/20 outline-none transition-all focus:border-white/40 focus:bg-white/20 hover:bg-white/15 font-light text-xs sm:text-sm cursor-pointer shadow-lg hover:shadow-xl appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1.2em] bg-[right_0.75rem_center] bg-no-repeat pr-10"
           >
             {userFiles.map((file, index) => (
               <option
@@ -213,7 +219,7 @@ function Model3D() {
               <Canvas
                 camera={{ position: [0, 0, 5], fov: 50 }}
                 gl={{ antialias: true }}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', background: 'transparent' }}
               >
                 <ambientLight intensity={0.5} />
                 <directionalLight position={[10, 10, 5]} intensity={1} />
@@ -228,7 +234,14 @@ function Model3D() {
                   minDistance={2}
                   maxDistance={20}
                 />
-                <Environment preset="sunset" />
+                {/* Environment будет применяться через BackgroundLightControls, если есть HDRI файл в GLTF */}
+                {!userIsAdmin || !selectedModel ? <Environment preset="sunset" /> : null}
+                {userIsAdmin && selectedModel && (
+                  <BackgroundLightControls 
+                    key={selectedModel.filename} 
+                    model={selectedModel} 
+                  />
+                )}
               </Canvas>
             </Suspense>
         )}

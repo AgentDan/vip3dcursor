@@ -12,7 +12,8 @@
             "type": "background",
             "name": "Background",
             "file": "/img/skyTwo.exr",
-            "intensity": 0.16
+            "intensity": 1,
+            "enabled": true
           },
           {
             "type": "camera",

@@ -101,9 +101,142 @@ const getAllFilesWithOwners = async () => {
   }
 };
 
+const getGltfBackground = async (filename, username) => {
+  try {
+    let filePath;
+    if (username) {
+      const normalizedUsername = username.toLowerCase().trim();
+      filePath = path.join(uploadDir, normalizedUsername, filename);
+    } else {
+      filePath = path.join(uploadDir, filename);
+    }
+
+    console.log('Reading GLTF file from path:', filePath); // Debug log
+
+    // Проверяем, что файл существует и это .gltf файл
+    if (!filename.endsWith('.gltf')) {
+      throw new Error('File must be a .gltf file');
+    }
+
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const gltf = JSON.parse(fileContent);
+    
+    console.log('GLTF scenes[0].extras.env:', JSON.stringify(gltf.scenes?.[0]?.extras?.env, null, 2)); // Debug log
+
+    // Извлекаем информацию о background из extras.env
+    // Ищем объект с type: "background" в extras.env
+    let backgroundData = null;
+    if (gltf.scenes && gltf.scenes[0] && gltf.scenes[0].extras && gltf.scenes[0].extras.env) {
+      const backgroundEnv = gltf.scenes[0].extras.env.find(env => env.type === 'background');
+      if (backgroundEnv) {
+        console.log('Found background env:', JSON.stringify(backgroundEnv, null, 2)); // Debug log
+        
+        // Используем intensity из объекта background, если он есть
+        // Если intensity отсутствует, используем значение по умолчанию 1.0
+        const intensity = backgroundEnv.intensity !== undefined ? backgroundEnv.intensity : 1.0;
+        console.log('Extracted intensity:', intensity, 'Type:', typeof intensity); // Debug log
+        
+        backgroundData = {
+          red: backgroundEnv.red !== undefined ? backgroundEnv.red : 255,
+          green: backgroundEnv.green !== undefined ? backgroundEnv.green : 0,
+          blue: backgroundEnv.blue !== undefined ? backgroundEnv.blue : 0,
+          intensity: intensity,
+          enabled: backgroundEnv.enabled !== undefined ? backgroundEnv.enabled : true,
+          file: backgroundEnv.file || null
+        };
+        
+        console.log('Returning background data:', backgroundData); // Debug log
+      } else {
+        console.log('Background env not found in extras.env'); // Debug log
+      }
+    } else {
+      console.log('No extras.env found in scenes[0]'); // Debug log
+    }
+
+    // Если background данных нет, возвращаем default (red)
+    if (!backgroundData) {
+      backgroundData = {
+        red: 255,
+        green: 0,
+        blue: 0,
+        intensity: 1.0,
+        enabled: true,
+        file: null
+      };
+    }
+
+    return backgroundData;
+  } catch (error) {
+    console.error('Error reading GLTF background:', error);
+    throw error;
+  }
+};
+
+const updateGltfBackground = async (filename, username, backgroundData) => {
+  try {
+    let filePath;
+    if (username) {
+      const normalizedUsername = username.toLowerCase().trim();
+      filePath = path.join(uploadDir, normalizedUsername, filename);
+    } else {
+      filePath = path.join(uploadDir, filename);
+    }
+
+    // Проверяем, что файл существует и это .gltf файл
+    if (!filename.endsWith('.gltf')) {
+      throw new Error('File must be a .gltf file');
+    }
+
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const gltf = JSON.parse(fileContent);
+
+    // Инициализируем структуру, если её нет
+    if (!gltf.scenes) {
+      gltf.scenes = [{}];
+    }
+    if (!gltf.scenes[0]) {
+      gltf.scenes[0] = {};
+    }
+    if (!gltf.scenes[0].extras) {
+      gltf.scenes[0].extras = {};
+    }
+    if (!gltf.scenes[0].extras.env) {
+      gltf.scenes[0].extras.env = [];
+    }
+
+    // Находим или создаем background entry
+    let backgroundEnv = gltf.scenes[0].extras.env.find(env => env.type === 'background');
+    if (!backgroundEnv) {
+      backgroundEnv = {
+        type: 'background',
+        name: 'Background'
+      };
+      gltf.scenes[0].extras.env.push(backgroundEnv);
+    }
+
+    // Обновляем только те данные, которые переданы
+    // Leva контролирует только intensity, остальные параметры не изменяем
+    if (backgroundData.intensity !== undefined) {
+      backgroundEnv.intensity = backgroundData.intensity;
+    }
+    // Остальные параметры (red, green, blue, enabled) не обновляем, если они не переданы
+    // Это позволяет Leva контролировать только intensity
+
+    // Сохраняем обновленный GLTF файл
+    await fs.writeFile(filePath, JSON.stringify(gltf, null, 2), 'utf-8');
+
+    return backgroundEnv;
+  } catch (error) {
+    console.error('Error updating GLTF background:', error);
+    throw error;
+  }
+};
+
 export default {
   getUploadedFiles,
   deleteFile,
-  getAllFilesWithOwners
+  getAllFilesWithOwners,
+  getGltfBackground,
+  updateGltfBackground
 };
 

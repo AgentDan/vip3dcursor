@@ -96,11 +96,36 @@ const getAllFilesWithOwners = async (req, res) => {
   }
 };
 
+const getGltfBackground = async (req, res) => {
+  try {
+    const { filename, username } = req.params;
+    const backgroundData = await uploadService.getGltfBackground(filename, username);
+    res.status(200).json(backgroundData);
+  } catch (error) {
+    console.error('Get GLTF background error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get GLTF background' });
+  }
+};
+
+const updateGltfBackground = async (req, res) => {
+  try {
+    const { filename, username } = req.params;
+    const { red, green, blue, intensity, enabled } = req.body;
+    await uploadService.updateGltfBackground(filename, username, { red, green, blue, intensity, enabled });
+    res.status(200).json({ message: 'GLTF background updated successfully' });
+  } catch (error) {
+    console.error('Update GLTF background error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update GLTF background' });
+  }
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
   getUploadedFiles,
   getAllFilesWithOwners,
-  deleteFile
+  deleteFile,
+  getGltfBackground,
+  updateGltfBackground
 };
 

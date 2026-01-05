@@ -80,5 +80,11 @@ router.get('/files/all', authenticate, uploadController.getAllFilesWithOwners);
 // Удалить файл (требует аутентификации)
 router.delete('/file/:filename', authenticate, uploadController.deleteFile);
 
+// Получить background из GLTF файла
+router.get('/gltf/:username/:filename/background', authenticate, uploadController.getGltfBackground);
+
+// Обновить background в GLTF файле
+router.put('/gltf/:username/:filename/background', authenticate, uploadController.updateGltfBackground);
+
 export default router;
 

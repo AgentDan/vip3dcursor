@@ -104,11 +104,52 @@ const deleteFile = async (filename) => {
   return await response.json();
 };
 
+const getGltfBackground = async (filename, username) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/gltf/${username}/${filename}/background`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get GLTF background');
+  }
+
+  return await response.json();
+};
+
+const updateGltfBackground = async (filename, username, backgroundData) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/gltf/${username}/${filename}/background`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(backgroundData)
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update GLTF background');
+  }
+
+  return await response.json();
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
   getFiles,
   getAllFilesWithOwners,
-  deleteFile
+  deleteFile,
+  getGltfBackground,
+  updateGltfBackground
 };
 
