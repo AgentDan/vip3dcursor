@@ -103,6 +103,25 @@ function Admin() {
     }
   };
 
+  const handleDeleteFile = async (filename, username) => {
+    if (!window.confirm(`Are you sure you want to delete file "${filename}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await uploadService.deleteFile(filename, username || null);
+      // Удаляем файл из списка по уникальной комбинации filename и username
+      setFiles(files.filter(file => {
+        const fileUsername = file.username || null;
+        const deleteUsername = username || null;
+        return !(file.filename === filename && fileUsername === deleteUsername);
+      }));
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     e.preventDefault();
     setError('');
@@ -662,18 +681,30 @@ function Admin() {
                                 {formatFileSize(file.size)}
                               </td>
                               <td className="px-2 py-1.5 whitespace-nowrap">
-                                <a
-                                  href={`http://127.0.0.1:3000${file.url}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
-                                  title="Open file"
-                                >
-                                  <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                  </svg>
-                                  Open
-                                </a>
+                                <div className="flex items-center gap-1.5">
+                                  <a
+                                    href={`http://127.0.0.1:3000${file.url}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
+                                    title="Open file"
+                                  >
+                                    <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Open
+                                  </a>
+                                  <button
+                                    onClick={() => handleDeleteFile(file.filename, file.username)}
+                                    className="px-2 py-0.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
+                                    title="Delete file"
+                                  >
+                                    <svg className="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                             ))}

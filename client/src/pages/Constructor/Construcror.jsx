@@ -11,6 +11,7 @@ const Constructor = () => {
   const [admin, setAdmin] = useState();
   const [loading, setLoading] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
+  const [gltfInfo, setGltfInfo] = useState(null);
 
   useEffect(() => {
     setUsername(getUsername());
@@ -33,50 +34,25 @@ const Constructor = () => {
   }, [authenticated]);
 
   const handleProjectSelect = async (projectName) => {
-    if (!projectName || !username) {
-      setCurrentProject(null);
-      return;
-    }
 
     setCurrentProject(projectName);
     
-    console.log("=== Выбранный проект ===");
-    console.log("Название проекта:", projectName);
-    
-    // Находим оригинальный файл по названию проекта
     const selectedFile = userFiles.find(file => {
       const fileLatinName = file.filename.replace(/[^a-zA-Z]/g, '');
       return fileLatinName === projectName;
     });
-
-    if (!selectedFile) {
-      console.error('Файл не найден для проекта:', projectName);
-      return;
-    }
-
-    // Проверяем, что это GLTF файл
-    if (!selectedFile.filename.endsWith('.gltf') && !selectedFile.filename.endsWith('.glb')) {
-      console.error('Выбранный файл не является GLTF:', selectedFile.filename);
-      return;
-    }
-
+    console.log(selectedFile);
     try {
-      console.log('=== Получение GLTF файла ===');
-      console.log('Файл:', selectedFile.filename);
-      console.log('Username:', username);
-      
-      // Получаем информацию о GLTF файле
       const gltfInfo = await uploadService.getGltfInfo(selectedFile.filename, username);
-      
-      console.log('=== GLTF Info ===');
-      console.log('Gltf Info:', gltfInfo);
-      console.log('Extras:', gltfInfo.extras);
-      console.log('Env:', gltfInfo.env);
-      
+      setGltfInfo(gltfInfo);
     } catch (error) {
       console.error('Ошибка при получении GLTF файла:', error);
     }
   };
+
+  useEffect(() => {
+    console.log("meshes :", gltfInfo);
+  }, [gltfInfo]);
 
   return (
     <div className="p-4">
