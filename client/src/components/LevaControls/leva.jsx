@@ -5,6 +5,7 @@ import { Environment } from '@react-three/drei';
 import uploadService from '../../services/upload.service';
 
 const BackgroundLightControls = ({ model }) => {
+    console.log('BackgroundLightControls', model);
     const { gl } = useThree();
     const [backgroundData, setBackgroundData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -15,7 +16,6 @@ const BackgroundLightControls = ({ model }) => {
 
     // Загружаем background данные из GLTF при монтировании и при смене модели
     useEffect(() => {
-        console.log('Model changed, loading background data for:', model?.filename); // Debug log
         // Сбрасываем флаги при смене модели
         isInitialLoadRef.current = true;
         setIsLoading(true);
@@ -42,8 +42,6 @@ const BackgroundLightControls = ({ model }) => {
                     model.filename,
                     model.username || ''
                 );
-                
-                console.log('Loaded background data from GLTF for model:', model.filename, data); // Debug log
                 
                 // Используем intensity из GLTF, если он есть
                 // Если intensity равен 0, это валидное значение, поэтому проверяем на undefined

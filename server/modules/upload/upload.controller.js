@@ -119,6 +119,17 @@ const updateGltfBackground = async (req, res) => {
   }
 };
 
+const getGltfInfo = async (req, res) => {
+  try {
+    const { filename, username } = req.params;
+    const gltfInfo = await uploadService.getGltfInfo(filename, username);
+    res.status(200).json(gltfInfo);
+  } catch (error) {
+    console.error('Get GLTF info error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get GLTF info' });
+  }
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
@@ -126,6 +137,7 @@ export default {
   getAllFilesWithOwners,
   deleteFile,
   getGltfBackground,
-  updateGltfBackground
+  updateGltfBackground,
+  getGltfInfo
 };
 

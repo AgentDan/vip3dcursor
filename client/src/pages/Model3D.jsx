@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Leva } from 'leva';
 import { getUsername, isAdmin } from '../utils/jwt.utils';
 import uploadService from '../services/upload.service';
-import BackgroundLightControls from './LevaControls/leva.jsx';
+import BackgroundLightControls from '../components/LevaControls/leva.jsx';
 
 function Model({ url, onLoad }) {
   const { scene } = useGLTF(url);

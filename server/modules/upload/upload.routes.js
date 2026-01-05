@@ -86,5 +86,8 @@ router.get('/gltf/:username/:filename/background', authenticate, uploadControlle
 // Обновить background в GLTF файле
 router.put('/gltf/:username/:filename/background', authenticate, uploadController.updateGltfBackground);
 
+// Получить информацию и экстрасы из GLTF файла
+router.get('/gltf/:username/:filename/info', authenticate, uploadController.getGltfInfo);
+
 export default router;
 

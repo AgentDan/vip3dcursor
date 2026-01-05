@@ -4,9 +4,8 @@ import {ScrollControls} from "@react-three/drei";
 import HeaderMain from "./HeaderMain.jsx";
 import Overlay from "./Overlay.jsx";
 import Bubble from "./Bubble.jsx";
-import BackgroundController from "./BackgroundController.jsx";
 
-const LayoutMain = () => {
+const Home = () => {
     return (
         <div className="relative w-screen h-screen">
             <HeaderMain/>
@@ -14,11 +13,11 @@ const LayoutMain = () => {
                 <ScrollControls pages={10} damping={0.2}>
                     <Overlay/>
                     <Bubble/>
-                    <BackgroundController/>
                 </ScrollControls>
             </Canvas>
         </div>
     );
 };
 
-export default LayoutMain;
+export default Home;
+

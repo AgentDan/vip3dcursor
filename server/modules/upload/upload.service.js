@@ -232,11 +232,93 @@ const updateGltfBackground = async (filename, username, backgroundData) => {
   }
 };
 
+const getGltfInfo = async (filename, username) => {
+  try {
+    let filePath;
+    if (username) {
+      const normalizedUsername = username.toLowerCase().trim();
+      filePath = path.join(uploadDir, normalizedUsername, filename);
+    } else {
+      filePath = path.join(uploadDir, filename);
+    }
+
+    // Проверяем, что файл существует и это .gltf файл
+    if (!filename.endsWith('.gltf')) {
+      throw new Error('File must be a .gltf file');
+    }
+
+    // Проверяем существование файла
+    try {
+      await fs.access(filePath);
+    } catch (error) {
+      throw new Error('File not found');
+    }
+
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const gltf = JSON.parse(fileContent);
+
+    // Извлекаем всю информацию из GLTF
+    const gltfInfo = {
+      // Основная информация о файле
+      version: gltf.asset?.version || null,
+      generator: gltf.asset?.generator || null,
+      copyright: gltf.asset?.copyright || null,
+      
+      // Информация о сценах
+      scenes: gltf.scenes?.map((scene, index) => ({
+        index,
+        name: scene.name || null,
+        nodes: scene.nodes || [],
+        extras: scene.extras || null
+      })) || [],
+      
+      // Информация о нодах
+      nodes: gltf.nodes?.map((node, index) => ({
+        index,
+        name: node.name || null,
+        mesh: node.mesh || null,
+        children: node.children || [],
+        extras: node.extras || null
+      })) || [],
+      
+      // Информация о мешах
+      meshes: gltf.meshes?.map((mesh, index) => ({
+        index,
+        name: mesh.name || null,
+        primitives: mesh.primitives?.length || 0,
+        extras: mesh.extras || null
+      })) || [],
+      
+      // Информация о материалах
+      materials: gltf.materials?.map((material, index) => ({
+        index,
+        name: material.name || null,
+        extras: material.extras || null
+      })) || [],
+      
+      // Все экстрасы из scenes[0]
+      extras: gltf.scenes?.[0]?.extras || null,
+      
+      // Экстрасы env из scenes[0].extras.env
+      env: gltf.scenes?.[0]?.extras?.env || [],
+      
+      // Полный объект extras из scenes[0]
+      scenesExtras: gltf.scenes?.[0]?.extras || null
+    };
+
+    return gltfInfo;
+  } catch (error) {
+    console.error('Error reading GLTF info:', error);
+    throw error;
+  }
+};
+
 export default {
   getUploadedFiles,
   deleteFile,
   getAllFilesWithOwners,
   getGltfBackground,
-  updateGltfBackground
+  updateGltfBackground,
+  getGltfInfo
 };
 

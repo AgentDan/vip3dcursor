@@ -47,6 +47,35 @@ const uploadFileToUser = async (file, username) => {
   return await response.json();
 };
 
+const getFilesForConstructor = async () => {
+  const token = localStorage.getItem('token');
+  
+  // Получаем username из токена
+  const decoded = JSON.parse(atob(token.split('.')[1]));
+  const username = decoded?.username;
+  
+  // Получаем все файлы
+  const response = await fetch(`${API_URL}/files/all`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch files');
+  }
+  
+  const allFiles = await response.json();
+  
+  // Фильтруем файлы текущего пользователя
+  const userFiles = allFiles.filter(file => file.username === username);
+  
+  return userFiles;
+};
+
 const getFiles = async () => {
   const token = localStorage.getItem('token');
   
@@ -143,13 +172,34 @@ const updateGltfBackground = async (filename, username, backgroundData) => {
   return await response.json();
 };
 
+const getGltfInfo = async (filename, username) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/gltf/${username}/${filename}/info`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get GLTF info');
+  }
+
+  return await response.json();
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
   getFiles,
   getAllFilesWithOwners,
+  getFilesForConstructor,
   deleteFile,
   getGltfBackground,
-  updateGltfBackground
+  updateGltfBackground,
+  getGltfInfo
 };
 

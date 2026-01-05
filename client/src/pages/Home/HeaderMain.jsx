@@ -13,20 +13,39 @@ const HeaderMain = () => {
     navigate('/login');
   };
 
+  const handleLogoClick = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="absolute top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-[50px] border-b border-white/20">
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
           <div className="flex-shrink-0">
-            <h1 className="text-lg sm:text-xl font-light text-black tracking-tight">Vicenzo BOATS</h1>
+            <h1 
+              onClick={handleLogoClick}
+              className="text-lg sm:text-xl font-light text-black tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              Vicenzo BOATS
+            </h1>
             {authenticated && username && (
               <p className="text-black text-xs font-light">Logged in as <span className="font-medium">{username}</span></p>
             )}
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             <button
-              onClick={() => navigate('/model')}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex-shrink-0"
+              onClick={() => {
+                if (authenticated) {
+                  navigate('/model');
+                }
+              }}
+              disabled={!authenticated}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md rounded-lg transition-all font-light text-xs sm:text-sm uppercase tracking-wider border flex-shrink-0 ${
+                authenticated
+                  ? 'bg-white/10 text-black hover:bg-white/20 border-white/20 cursor-pointer'
+                  : 'bg-gray-100/50 text-gray-400 border-gray-200/30 cursor-not-allowed opacity-60'
+              }`}
+              title={!authenticated ? "Login Required" : "View 3D Models"}
             >
               <span className="flex items-center whitespace-nowrap">
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
