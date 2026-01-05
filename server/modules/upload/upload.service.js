@@ -28,9 +28,19 @@ const getUploadedFiles = async () => {
   }
 };
 
-const deleteFile = async (filename) => {
+const deleteFile = async (filename, username = null) => {
   try {
-    const filePath = path.join(uploadDir, filename);
+    let filePath;
+    
+    // Если указан username, ищем файл в папке пользователя
+    if (username) {
+      const normalizedUsername = username.toLowerCase().trim();
+      filePath = path.join(uploadDir, normalizedUsername, filename);
+    } else {
+      // Иначе ищем в корневой папке
+      filePath = path.join(uploadDir, filename);
+    }
+    
     await fs.unlink(filePath);
   } catch (error) {
     if (error.code === 'ENOENT') {

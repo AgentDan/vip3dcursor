@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUsername, isAuthenticated, isAdmin } from '../../utils/jwt.utils';
 import uploadService from '../../services/upload.service';
 import constructorService from '../../services/constructor.service';
@@ -7,6 +8,7 @@ import Controller from './Controller';
 import { buildRuntime } from './buildRuntime';
 
 const Constructor = () => {
+  const navigate = useNavigate();
   const authenticated = isAuthenticated();
   const [userModelsNames, setUserModelsNames] = useState([]);
   const [userFiles, setUserFiles] = useState([]); // Сохраняем оригинальные файлы
@@ -18,6 +20,9 @@ const Constructor = () => {
   const [currentPath, setCurrentPath] = useState(null);
   const [gltf, setGltf] = useState(null);
   const [runtime, setRuntime] = useState(null);
+  const [meshGroups, setMeshGroups] = useState({ defaultMeshes: [], groups: {} });
+  const [selectedMeshes, setSelectedMeshes] = useState({}); // { "1": "Mesh_1_1", "2": "Mesh_2_1" }
+  const [isMenuOpen, setIsMenuOpen] = useState(true); // Состояние открыто/закрыто меню
 
   const gltfRef = useRef(null);
   
@@ -90,8 +95,33 @@ const Constructor = () => {
       gltfRef.current = null;
       setGltf(null);
       setRuntime(null);
+      setMeshGroups({ defaultMeshes: [], groups: {} });
+      setSelectedMeshes({});
     }
   }, [currentPath]);
+
+  // Обработчик для получения информации о группах мешей
+  const handleMeshesGrouped = useCallback(({ defaultMeshes, groups }) => {
+    setMeshGroups({ defaultMeshes, groups });
+    
+    // Устанавливаем первый объект в каждой группе как выбранный по умолчанию
+    const initialSelected = {};
+    Object.keys(groups).forEach(groupNum => {
+      if (groups[groupNum].length > 0) {
+        // groups[groupNum] - это массив объектов, берем key первого объекта
+        initialSelected[groupNum] = groups[groupNum][0].key;
+      }
+    });
+    setSelectedMeshes(initialSelected);
+  }, []);
+
+  // Обработчик изменения выбранного меша в группе
+  const handleMeshSelect = (groupNum, meshName) => {
+    setSelectedMeshes(prev => ({
+      ...prev,
+      [groupNum]: meshName
+    }));
+  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
@@ -101,47 +131,104 @@ const Constructor = () => {
         runtime={runtime} 
         currentPath={currentPath}
         onGltfLoad={handleGltfLoad}
+        selectedMeshes={selectedMeshes}
+        onMeshesGrouped={handleMeshesGrouped}
       />
       
-      {/* Выпадающий список поверх Canvas */}
-      <div className="absolute top-4 left-4 z-50">
-        <div className="bg-white/20 backdrop-blur-[10px] rounded-lg border border-white/30 p-4 shadow-xl">
-          <h1 className="text-2xl font-light mb-4 text-gray-900">Конструктор</h1>
+      {/* Кнопки Home и Constructor - правый верхний угол */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col items-end gap-2">
+        <button
+          onClick={() => navigate('/home')}
+          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex-shrink-0 whitespace-nowrap shadow-lg"
+          title="Go to home page"
+        >
+          Home
+        </button>
 
-          {loading && (
-            <p className="text-gray-700">Загрузка файлов...</p>
-          )}
-
-          {!loading && userModelsNames.length > 0 && (
-            <select
-              value={currentProject || ""}
-              onChange={(e) => {
-                const selectedProject = e.target.value;
-                if (selectedProject) {
-                  handleProjectSelect(selectedProject);
-                } else {
-                  setCurrentProject(null);
-                  setCurrentPath(null);
-                  // Очищаем gltf и runtime при сбросе выбора
-                  setGltf(null);
-                  setRuntime(null);
-                }
-              }}
-              className="w-full max-w-md px-4 py-2.5 bg-white/30 backdrop-blur-[5px] text-gray-900 rounded-lg border border-white/40 outline-none transition-all focus:border-white/60 focus:bg-white/40 hover:bg-white/35 font-light text-sm cursor-pointer shadow-lg hover:shadow-xl appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23334155%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1.2em] bg-[right_0.75rem_center] bg-no-repeat pr-10"
+        {/* Выпадающий список с кнопкой Constructor */}
+        <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-lg overflow-hidden min-w-[200px] sm:min-w-[250px]">
+          {/* Кнопка заголовка "Constructor" */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex items-center justify-between"
+          >
+            <span>Constructor</span>
+            <svg
+              className={`w-4 h-4 text-black transition-transform duration-200 flex-shrink-0 ${isMenuOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <option value="">Выбери модель ...</option>
-              {userModelsNames.map((i, index) => {
-                return (
-                  <option key={index} value={i}>
-                    {i}
-                  </option>
-                );
-              })}
-            </select>
-          )}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
-          {!loading && userModelsNames.length === 0 && (
-            <p className="text-gray-700">Файлы не найдены</p>
+          {/* Содержимое меню (показывается/скрывается) */}
+          {isMenuOpen && (
+            <div className="px-3 sm:px-4 pt-3 pb-3 sm:pb-4 space-y-3">
+              {loading && (
+                <p className="text-xs sm:text-sm text-gray-700 font-light">Загрузка файлов...</p>
+              )}
+
+              {!loading && userModelsNames.length > 0 && (
+                <select
+                  value={currentProject || ""}
+                  onChange={(e) => {
+                    const selectedProject = e.target.value;
+                    if (selectedProject) {
+                      handleProjectSelect(selectedProject);
+                    } else {
+                      setCurrentProject(null);
+                      setCurrentPath(null);
+                      // Очищаем gltf и runtime при сбросе выбора
+                      setGltf(null);
+                      setRuntime(null);
+                    }
+                  }}
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg border border-white/20 outline-none transition-all focus:border-white/40 focus:bg-white/20 hover:bg-white/15 font-light text-xs sm:text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000000%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1em] bg-[right_0.5rem_center] bg-no-repeat pr-8"
+                >
+                  <option value="">Выбери модель ...</option>
+                  {userModelsNames.map((i, index) => {
+                    return (
+                      <option key={index} value={i}>
+                        {i}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+
+              {!loading && userModelsNames.length === 0 && (
+                <p className="text-xs sm:text-sm text-gray-700 font-light">Файлы не найдены</p>
+              )}
+
+              {/* Выпадающие списки для групп мешей */}
+              {gltf && Object.keys(meshGroups.groups).length > 0 && (
+                <div className="space-y-2 sm:space-y-3">
+                  <h2 className="text-xs sm:text-sm font-light text-black uppercase tracking-wider mb-2">Группы мешей</h2>
+                  {Object.entries(meshGroups.groups)
+                    .sort(([a], [b]) => parseInt(a) - parseInt(b)) // Сортируем группы по номеру
+                    .map(([groupNum, objects]) => (
+                      <div key={groupNum} className="space-y-1">
+                        <label className="block text-xs sm:text-sm font-light text-gray-700">
+                          Группа {groupNum}
+                        </label>
+                        <select
+                          value={selectedMeshes[groupNum] || ""}
+                          onChange={(e) => handleMeshSelect(groupNum, e.target.value)}
+                          className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg border border-white/20 outline-none transition-all focus:border-white/40 focus:bg-white/20 hover:bg-white/15 font-light text-xs sm:text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000000%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1em] bg-[right_0.5rem_center] bg-no-repeat pr-8"
+                        >
+                          {objects.map((obj) => (
+                            <option key={obj.key} value={obj.key}>
+                              {obj.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

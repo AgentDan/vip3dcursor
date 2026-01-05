@@ -104,15 +104,15 @@ function Admin() {
     }
   };
 
-  const handleDeleteFile = async (filename) => {
+  const handleDeleteFile = async (filename, username) => {
     if (!window.confirm(`Are you sure you want to delete file "${filename}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      await uploadService.deleteFile(filename);
-      // Удаляем файл из списка
-      setFiles(files.filter(file => file.filename !== filename));
+      await uploadService.deleteFile(filename, username);
+      // Удаляем файл из списка (учитываем username для правильной фильтрации)
+      setFiles(files.filter(file => !(file.filename === filename && file.username === username)));
       setError('');
     } catch (err) {
       setError(err.message);
@@ -692,7 +692,7 @@ function Admin() {
                                     Open
                                   </a>
                                   <button
-                                    onClick={() => handleDeleteFile(file.filename)}
+                                    onClick={() => handleDeleteFile(file.filename, file.username)}
                                     className="px-2 py-0.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-all font-medium text-[10px] inline-flex items-center cursor-pointer"
                                     title="Delete file"
                                   >

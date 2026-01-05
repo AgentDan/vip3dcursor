@@ -44,44 +44,150 @@ function CameraController({ gltf }) {
   return null;
 }
 
-// Функция для сбора названий всех мешей
-function collectMeshNames(object, names = []) {
+// Функция для сбора всех мешей с их объектами
+function collectMeshes(object, meshes = []) {
   if (object.isMesh) {
     const meshName = object.name || 'unnamed';
-    if (!names.includes(meshName)) {
-      names.push(meshName);
+    if (!meshes.find(m => m.name === meshName)) {
+      meshes.push({ name: meshName, object });
     }
   }
   
   if (object.children) {
     object.children.forEach(child => {
-      collectMeshNames(child, names);
+      collectMeshes(child, meshes);
     });
   }
   
-  return names;
+  return meshes;
+}
+
+// Функция для группировки мешей
+// Первая цифра = группа, вторая цифра = объект
+// Меши с одинаковой первой и второй цифрой объединяются в один объект
+function groupMeshes(meshNames) {
+  const groups = {};
+  const defaultMeshes = [];
+  
+  meshNames.forEach(meshName => {
+    // Проверяем, является ли меш дефолтным (начинается с "Default")
+    if (meshName.toLowerCase().startsWith('default')) {
+      defaultMeshes.push(meshName);
+      return;
+    }
+    
+    // Ищем число в названии меша (например, "11.1" -> "11")
+    const digitMatch = meshName.match(/(\d+)/);
+    if (digitMatch) {
+      const numberStr = digitMatch[1];
+      
+      // Если число содержит минимум 2 цифры
+      if (numberStr.length >= 2) {
+        const firstDigit = numberStr[0]; // Первая цифра = группа
+        const secondDigit = numberStr[1]; // Вторая цифра = объект
+        const groupNum = firstDigit;
+        const objectKey = `${firstDigit}${secondDigit}`; // Ключ объекта (например, "11")
+        
+        if (!groups[groupNum]) {
+          groups[groupNum] = {};
+        }
+        
+        if (!groups[groupNum][objectKey]) {
+          groups[groupNum][objectKey] = [];
+        }
+        
+        // Добавляем меш к объекту (объект может содержать несколько мешей с разными материалами)
+        groups[groupNum][objectKey].push(meshName);
+      } else {
+        // Если только одна цифра, используем её как группу, объект = 0
+        const groupNum = numberStr[0];
+        if (!groups[groupNum]) {
+          groups[groupNum] = {};
+        }
+        const objectKey = `${groupNum}0`;
+        if (!groups[groupNum][objectKey]) {
+          groups[groupNum][objectKey] = [];
+        }
+        groups[groupNum][objectKey].push(meshName);
+      }
+    }
+  });
+  
+  // Преобразуем структуру в формат для UI
+  // groups[groupNum] = { "11": ["11.1", "11.2"], "12": ["12.1"] }
+  // -> groups[groupNum] = [{ key: "11", meshes: ["11.1", "11.2"], label: "Объект 11" }, ...]
+  const formattedGroups = {};
+  Object.keys(groups).forEach(groupNum => {
+    formattedGroups[groupNum] = Object.entries(groups[groupNum])
+      .sort(([a], [b]) => a.localeCompare(b)) // Сортируем объекты по ключу
+      .map(([objectKey, meshes]) => ({
+        key: objectKey,
+        meshes: meshes,
+        label: `Объект ${objectKey}`
+      }));
+  });
+  
+  return { defaultMeshes, groups: formattedGroups };
+}
+
+// Компонент для управления видимостью мешей
+function MeshVisibilityController({ gltf, selectedMeshes }) {
+  useEffect(() => {
+    if (!gltf || !gltf.scene) return;
+    
+    // Собираем все меши
+    const allMeshes = collectMeshes(gltf.scene);
+    
+    // Группируем меши
+    const meshNames = allMeshes.map(m => m.name);
+    const { defaultMeshes, groups } = groupMeshes(meshNames);
+    
+    // Устанавливаем видимость для всех мешей
+    allMeshes.forEach(({ name, object }) => {
+      // Дефолтные меши всегда видимы
+      if (defaultMeshes.includes(name)) {
+        object.visible = true;
+        // Также обновляем в gltf.nodes если есть
+        if (gltf.nodes && gltf.nodes[name]) {
+          gltf.nodes[name].visible = true;
+        }
+        return;
+      }
+      
+      // Для остальных мешей проверяем, выбран ли объект, к которому они относятся
+      let isVisible = false;
+      
+      // Ищем, к какой группе и объекту относится меш
+      for (const [groupNum, objects] of Object.entries(groups)) {
+        for (const obj of objects) {
+          // Если меш входит в этот объект
+          if (obj.meshes.includes(name)) {
+            // Проверяем, выбран ли этот объект в группе
+            const selectedObjectKey = selectedMeshes[groupNum];
+            if (selectedObjectKey === obj.key) {
+              // Показываем все меши этого объекта
+              isVisible = true;
+            }
+            break;
+          }
+        }
+        if (isVisible) break;
+      }
+      
+      object.visible = isVisible;
+      // Также обновляем в gltf.nodes если есть
+      if (gltf.nodes && gltf.nodes[name]) {
+        gltf.nodes[name].visible = isVisible;
+      }
+    });
+  }, [gltf, selectedMeshes]);
+  
+  return null;
 }
 
 // Компонент для рендеринга GLTF сцены
 function GltfScene({ gltf, schema, runtime }) {
   const schemaAppliedRef = useRef(false);
-  
-  useEffect(() => {
-    if (gltf && gltf.scene) {
-      // Собираем только названия мешей
-      const meshNames = collectMeshNames(gltf.scene);
-      console.log("Меши модели:", meshNames);
-      
-      // Вычисляем bounding box для центрирования камеры
-      if (gltf.scene.children.length > 0) {
-        const box = new THREE.Box3().setFromObject(gltf.scene);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const distance = maxDim * 2;
-      }
-    }
-  }, [gltf]);
   
   if (!gltf || !gltf.scene) {
     return null;
@@ -121,7 +227,7 @@ function GltfScene({ gltf, schema, runtime }) {
   return <primitive object={gltf.scene} scale={1} />;
 }
 
-const Controller = ({ gltf, runtime, currentPath, onGltfLoad }) => {
+const Controller = ({ gltf, runtime, currentPath, onGltfLoad, selectedMeshes, onMeshesGrouped }) => {
   const [schema, setSchema] = useState(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
@@ -131,6 +237,17 @@ const Controller = ({ gltf, runtime, currentPath, onGltfLoad }) => {
     // Проверяем, изменился ли gltf.scene (сравниваем по ссылке)
     if (gltf && gltf.scene && gltfSceneRef.current !== gltf.scene) {
       gltfSceneRef.current = gltf.scene;
+      
+      // Собираем и группируем меши
+      const allMeshes = collectMeshes(gltf.scene);
+      const meshNames = allMeshes.map(m => m.name);
+      const { defaultMeshes, groups } = groupMeshes(meshNames);
+      console.log("Меши модели:", meshNames);
+      
+      // Передаем информацию о группах в родительский компонент
+      if (onMeshesGrouped) {
+        onMeshesGrouped({ defaultMeshes, groups });
+      }
       
       // Загружаем schema.json если есть gltf
       setSchemaLoading(true);
@@ -154,7 +271,7 @@ const Controller = ({ gltf, runtime, currentPath, onGltfLoad }) => {
       gltfSceneRef.current = null;
       setSchema(null);
     }
-  }, [gltf, runtime]);
+  }, [gltf, runtime, onMeshesGrouped]);
 
   // Если GLTF не загружен, показываем пустой Canvas с градиентом
   // Но все равно рендерим Canvas, чтобы GltfLoader мог работать
@@ -190,6 +307,7 @@ const Controller = ({ gltf, runtime, currentPath, onGltfLoad }) => {
           {!showEmptyCanvas && (
             <>
               <CameraController gltf={gltf} />
+              <MeshVisibilityController gltf={gltf} selectedMeshes={selectedMeshes || {}} />
               <GltfScene gltf={gltf} schema={schema} runtime={runtime} />
             </>
           )}

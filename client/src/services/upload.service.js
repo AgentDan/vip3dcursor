@@ -114,10 +114,15 @@ const getAllFilesWithOwners = async () => {
   return await response.json();
 };
 
-const deleteFile = async (filename) => {
+const deleteFile = async (filename, username = null) => {
   const token = localStorage.getItem('token');
   
-  const response = await fetch(`${API_URL}/file/${filename}`, {
+  // Добавляем username в query параметры, если он указан
+  const url = username 
+    ? `${API_URL}/file/${filename}?username=${encodeURIComponent(username)}`
+    : `${API_URL}/file/${filename}`;
+  
+  const response = await fetch(url, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',

@@ -78,7 +78,8 @@ const getUploadedFiles = async (req, res) => {
 const deleteFile = async (req, res) => {
   try {
     const { filename } = req.params;
-    await uploadService.deleteFile(filename);
+    const username = req.query.username; // Получаем username из query параметров
+    await uploadService.deleteFile(filename, username);
     res.status(200).json({ message: 'File deleted successfully' });
   } catch (error) {
     console.error('Delete file error:', error);
