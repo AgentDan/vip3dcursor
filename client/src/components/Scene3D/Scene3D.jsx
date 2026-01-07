@@ -86,7 +86,7 @@ export function Scene3D({
               canvas.removeEventListener('webglcontextrestored', contextRestoredHandler);
             };
           }}
-          style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}
+          style={{ width: '100%', height: '100%' }}
         >
           <ambientLight intensity={0.5} />
           <directionalLight position={[10, 10, 5]} intensity={1} />
@@ -120,7 +120,10 @@ export function Scene3D({
             minDistance={0.1}
             maxDistance={100}
           />
-          <Environment preset="sunset" />
+          {/* Environment будет применяться через EnvParamsController, если есть HDRI в env параметрах */}
+          {(!envParams || envParams.length === 0 || !envParams.some(p => p.type === 'environment' && p.file)) && (
+            <Environment preset="sunset" />
+          )}
         </Canvas>
       </Suspense>
     </div>

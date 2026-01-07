@@ -33,27 +33,27 @@ export function EnvEditorPanel({ envParams, onUpdate, onClose }) {
 
   // Мемоизируем обработчик для избежания лишних рендеров
   const handleChange = useCallback((index, key, value) => {
-    if (isUpdatingRef.current) {
-      return; // Предотвращаем повторные вызовы
-    }
-    
     setLocalParams(prev => {
       const updated = [...prev];
       if (updated[index]) {
         // Проверяем, действительно ли значение изменилось
-        if (updated[index][key] === value) {
+        const currentValue = updated[index][key];
+        // Для чисел с плавающей точкой используем приблизительное сравнение
+        if (typeof currentValue === 'number' && typeof value === 'number') {
+          if (Math.abs(currentValue - value) < 0.0001) {
+            return prev; // Значение не изменилось, не обновляем
+          }
+        } else if (currentValue === value) {
           return prev; // Значение не изменилось, не обновляем
         }
         
         updated[index] = { ...updated[index], [key]: value };
         
         // Немедленно уведомляем родителя для применения к сцене
-        isUpdatingRef.current = true;
-        onUpdate?.(updated);
-        // Сбрасываем флаг после небольшой задержки
+        // Используем setTimeout для гарантии, что состояние обновлено
         setTimeout(() => {
-          isUpdatingRef.current = false;
-        }, 10);
+          onUpdate?.(updated);
+        }, 0);
       }
       
       return updated;

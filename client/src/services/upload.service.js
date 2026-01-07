@@ -196,129 +196,30 @@ const getGltfInfo = async (filename, username) => {
   return await response.json();
 };
 
-const getUploadLabFile = async () => {
+const updateGltfEnv = async (filePath, envParams) => {
   const token = localStorage.getItem('token');
   
-  const response = await fetch(`${API_URL}/uploadlab/file`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to get uploadlab file');
-  }
-
-  return await response.json();
-};
-
-const uploadUploadLabFile = async (file) => {
-  const token = localStorage.getItem('token');
-  
-  if (!token) {
-    throw new Error('No authentication token found');
+  // Извлекаем путь к файлу из URL
+  // filePath может быть: http://127.0.0.1:3000/uploads/username/file.gltf
+  // Нужно получить: /uploads/username/file.gltf
+  let relativePath = filePath;
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    const url = new URL(filePath);
+    relativePath = url.pathname;
   }
   
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  const response = await fetch(`${API_URL}/uploadlab/file`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    },
-    body: formData
-  });
-
-  if (!response.ok) {
-    let errorMessage = 'Failed to upload uploadlab file';
-    try {
-      const error = await response.json();
-      errorMessage = error.error || errorMessage;
-    } catch (e) {
-      errorMessage = `Server error: ${response.status} ${response.statusText}`;
-    }
-    throw new Error(errorMessage);
-  }
-
-  return await response.json();
-};
-
-const deleteUploadLabFile = async () => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_URL}/uploadlab/file`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to delete uploadlab file');
-  }
-
-  return await response.json();
-};
-
-const getUploadLabGltfEnvTypes = async () => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_URL}/uploadlab/gltf/env/types`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to get uploadlab GLTF env types');
-  }
-
-  return await response.json();
-};
-
-const getUploadLabGltfEnvStructure = async () => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_URL}/uploadlab/gltf/env/structure`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to get uploadlab GLTF env structure');
-  }
-
-  return await response.json();
-};
-
-const updateUploadLabGltfEnv = async (envParams) => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_URL}/uploadlab/gltf/env`, {
+  const response = await fetch(`${API_URL}/gltf/env`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({ env: envParams })
+    body: JSON.stringify({ filePath: relativePath, env: envParams })
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to update uploadlab GLTF env');
+    throw new Error(error.error || 'Failed to update GLTF env');
   }
 
   return await response.json();
@@ -334,11 +235,6 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  getUploadLabFile,
-  uploadUploadLabFile,
-  deleteUploadLabFile,
-  getUploadLabGltfEnvTypes,
-  getUploadLabGltfEnvStructure,
-  updateUploadLabGltfEnv
+  updateGltfEnv
 };
 

@@ -54,50 +54,99 @@ const getAllFilesWithOwners = async () => {
   try {
     const allFiles = [];
     
+    // Проверяем, существует ли директория upload
+    try {
+      await fs.access(uploadDir);
+    } catch (error) {
+      // Если директория не существует, возвращаем пустой массив
+      console.warn('Upload directory does not exist:', uploadDir);
+      return [];
+    }
+    
     // Получаем список всех папок в upload директории
-    const entries = await fs.readdir(uploadDir, { withFileTypes: true });
+    let entries;
+    try {
+      entries = await fs.readdir(uploadDir, { withFileTypes: true });
+    } catch (error) {
+      console.error('Error reading upload directory:', error);
+      // Если не удалось прочитать с withFileTypes, пробуем без него
+      try {
+        const fileNames = await fs.readdir(uploadDir);
+        entries = await Promise.all(
+          fileNames.map(async (name) => {
+            const filePath = path.join(uploadDir, name);
+            const stats = await fs.stat(filePath);
+            return {
+              name,
+              isDirectory: () => stats.isDirectory(),
+              isFile: () => stats.isFile()
+            };
+          })
+        );
+      } catch (fallbackError) {
+        console.error('Error reading upload directory (fallback):', fallbackError);
+        return [];
+      }
+    }
     
     for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const username = entry.name;
-        const userDir = path.join(uploadDir, username);
+      // Получаем имя файла/папки (поддерживаем оба формата)
+      const entryName = entry.name || entry;
+      
+      
+      try {
+        const entryPath = path.join(uploadDir, entryName);
+        const entryStats = await fs.stat(entryPath);
         
-        try {
-          // Получаем все файлы в папке пользователя
-          const files = await fs.readdir(userDir);
+        if (entryStats.isDirectory()) {
+          const username = entryName;
+          const userDir = entryPath;
           
-          for (const file of files) {
-            const filePath = path.join(userDir, file);
-            const stats = await fs.stat(filePath);
+          try {
+            // Получаем все файлы в папке пользователя
+            const files = await fs.readdir(userDir);
             
-            allFiles.push({
-              filename: file,
-              username: username,
-              size: stats.size,
-              createdAt: stats.birthtime,
-              modifiedAt: stats.mtime,
-              url: `/uploads/${username}/${file}`,
-              path: filePath
-            });
+            for (const file of files) {
+              try {
+                const filePath = path.join(userDir, file);
+                const stats = await fs.stat(filePath);
+                
+                // Проверяем, что это файл, а не директория
+                if (stats.isFile()) {
+                  allFiles.push({
+                    filename: file,
+                    username: username,
+                    size: stats.size,
+                    createdAt: stats.birthtime,
+                    modifiedAt: stats.mtime,
+                    url: `/uploads/${username}/${file}`,
+                    path: filePath
+                  });
+                }
+              } catch (error) {
+                console.error(`Error reading file ${file} for user ${username}:`, error);
+                // Продолжаем обработку других файлов
+              }
+            }
+          } catch (error) {
+            console.error(`Error reading directory for user ${username}:`, error);
+            // Продолжаем обработку других папок
           }
-        } catch (error) {
-          console.error(`Error reading directory for user ${username}:`, error);
-          // Продолжаем обработку других папок
+        } else if (entryStats.isFile()) {
+          // Файлы в корневой папке upload (без владельца)
+          allFiles.push({
+            filename: entryName,
+            username: null,
+            size: entryStats.size,
+            createdAt: entryStats.birthtime,
+            modifiedAt: entryStats.mtime,
+            url: `/uploads/${entryName}`,
+            path: entryPath
+          });
         }
-      } else if (entry.isFile()) {
-        // Файлы в корневой папке upload (без владельца)
-        const filePath = path.join(uploadDir, entry.name);
-        const stats = await fs.stat(filePath);
-        
-        allFiles.push({
-          filename: entry.name,
-          username: null,
-          size: stats.size,
-          createdAt: stats.birthtime,
-          modifiedAt: stats.mtime,
-          url: `/uploads/${entry.name}`,
-          path: filePath
-        });
+      } catch (error) {
+        console.error(`Error processing entry ${entryName}:`, error);
+        // Продолжаем обработку других entries
       }
     }
     
@@ -323,178 +372,28 @@ const getGltfInfo = async (filename, username) => {
   }
 };
 
-const getUploadLabFile = async () => {
+const updateGltfEnv = async (filePath, envParams) => {
   try {
-    const uploadLabDir = path.join(uploadDir, 'uploadlab');
+    // filePath приходит как /uploads/username/file.gltf
+    // Нужно преобразовать в полный путь к файлу
+    // Убираем /uploads/ из начала пути
+    const relativePath = filePath.replace(/^\/uploads\//, '');
+    const fullPath = path.join(uploadDir, relativePath);
     
-    // Проверяем, существует ли папка uploadlab
+    // Проверяем, существует ли файл
     try {
-      await fs.access(uploadLabDir);
+      await fs.access(fullPath);
     } catch (error) {
-      // Если папки нет, возвращаем null
-      return null;
+      throw new Error(`File not found: ${filePath}`);
     }
     
-    // Получаем список файлов в папке uploadlab
-    const files = await fs.readdir(uploadLabDir);
-    
-    if (files.length === 0) {
-      return null;
+    // Проверяем, что это GLTF файл
+    if (!fullPath.endsWith('.gltf')) {
+      throw new Error('File must be a GLTF file');
     }
-    
-    // Возвращаем первый файл (в uploadlab только один файл)
-    const filename = files[0];
-    const filePath = path.join(uploadLabDir, filename);
-    const stats = await fs.stat(filePath);
-    
-    const fileInfo = {
-      filename,
-      size: stats.size,
-      createdAt: stats.birthtime,
-      modifiedAt: stats.mtime,
-      url: `/uploads/uploadlab/${filename}`,
-      path: filePath
-    };
-    
-    return fileInfo;
-  } catch (error) {
-    console.error('Error reading uploadlab file:', error);
-    throw error;
-  }
-};
-
-const deleteUploadLabFile = async (excludeFilename = null) => {
-  try {
-    const uploadLabDir = path.join(uploadDir, 'uploadlab');
-    
-    // Проверяем, существует ли папка uploadlab
-    try {
-      await fs.access(uploadLabDir);
-    } catch (error) {
-      // Если папки нет, ничего не делаем
-      return;
-    }
-    
-    // Получаем список файлов в папке uploadlab
-    const files = await fs.readdir(uploadLabDir);
-    
-    // Удаляем все файлы, КРОМЕ исключенного (нового файла)
-    for (const file of files) {
-      if (excludeFilename && file === excludeFilename) {
-        continue;
-      }
-      const filePath = path.join(uploadLabDir, file);
-      await fs.unlink(filePath);
-    }
-  } catch (error) {
-    console.error('Error deleting uploadlab file:', error);
-    throw error;
-  }
-};
-
-const getUploadLabGltfEnvTypes = async () => {
-  try {
-    const uploadLabDir = path.join(uploadDir, 'uploadlab');
-    
-    // Проверяем, существует ли папка uploadlab
-    try {
-      await fs.access(uploadLabDir);
-    } catch (error) {
-      return { error: 'Uploadlab directory does not exist' };
-    }
-    
-    // Получаем список файлов в папке uploadlab
-    const files = await fs.readdir(uploadLabDir);
-    
-    if (files.length === 0) {
-      return { error: 'No files in uploadlab' };
-    }
-    
-    // Ищем GLTF файл
-    const gltfFile = files.find(file => file.endsWith('.gltf'));
-    
-    if (!gltfFile) {
-      return { error: 'No GLTF file found in uploadlab' };
-    }
-    
-    const filePath = path.join(uploadLabDir, gltfFile);
     
     // Читаем GLTF файл
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const gltf = JSON.parse(fileContent);
-    
-    // Извлекаем объект env
-    const env = gltf.scenes?.[0]?.extras?.env;
-    
-    if (!env || !Array.isArray(env)) {
-      return { error: 'No env array found in GLTF file' };
-    }
-    
-    // Собираем все уникальные типы
-    const types = [];
-    const typesMap = {};
-    
-    env.forEach((item, index) => {
-      if (item && item.type) {
-        if (!typesMap[item.type]) {
-          typesMap[item.type] = [];
-        }
-        typesMap[item.type].push({
-          index,
-          type: item.type,
-          data: item
-        });
-      }
-    });
-    
-    // Формируем результат
-    const result = {
-      filename: gltfFile,
-      totalEnvItems: env.length,
-      types: Object.keys(typesMap),
-      typesDetails: Object.entries(typesMap).map(([type, items]) => ({
-        type,
-        count: items.length,
-        items: items
-      })),
-      fullEnv: env
-    };
-    
-    return result;
-  } catch (error) {
-    console.error('Error reading uploadlab GLTF env types:', error);
-    throw error;
-  }
-};
-
-const updateUploadLabGltfEnv = async (envParams) => {
-  try {
-    const uploadLabDir = path.join(uploadDir, 'uploadlab');
-    
-    // Проверяем, существует ли папка uploadlab
-    try {
-      await fs.access(uploadLabDir);
-    } catch (error) {
-      throw new Error('Uploadlab directory does not exist');
-    }
-    
-    // Получаем список файлов в папке uploadlab
-    const files = await fs.readdir(uploadLabDir);
-    
-    if (files.length === 0) {
-      throw new Error('No files in uploadlab');
-    }
-    
-    // Находим GLTF файл
-    const gltfFile = files.find(file => file.endsWith('.gltf'));
-    if (!gltfFile) {
-      throw new Error('No GLTF file found in uploadlab');
-    }
-    
-    const filePath = path.join(uploadLabDir, gltfFile);
-    
-    // Читаем GLTF файл
-    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const fileContent = await fs.readFile(fullPath, 'utf-8');
     const gltf = JSON.parse(fileContent);
     
     // Инициализируем структуру, если её нет
@@ -509,69 +408,60 @@ const updateUploadLabGltfEnv = async (envParams) => {
     }
     
     // Обновляем env параметры
-    gltf.scenes[0].extras.env = envParams;
+    // Убеждаемся, что все параметры правильно сериализуются
+    const sanitizedEnvParams = envParams.map(param => {
+      if (!param || typeof param !== 'object') {
+        return param;
+      }
+      
+      const sanitized = { ...param };
+      
+      // Сохраняем все свойства параметра
+      // Для чисел убеждаемся, что они остаются числами
+      if (sanitized.intensity !== undefined && sanitized.intensity !== null) {
+        sanitized.intensity = Number(sanitized.intensity);
+      }
+      if (sanitized.red !== undefined && sanitized.red !== null) {
+        sanitized.red = Number(sanitized.red);
+      }
+      if (sanitized.green !== undefined && sanitized.green !== null) {
+        sanitized.green = Number(sanitized.green);
+      }
+      if (sanitized.blue !== undefined && sanitized.blue !== null) {
+        sanitized.blue = Number(sanitized.blue);
+      }
+      
+      // Для environment параметров сохраняем все свойства
+      if (sanitized.type === 'environment') {
+        // Сохраняем file как есть (строка), даже если это пустая строка
+        if (sanitized.file !== undefined && sanitized.file !== null) {
+          sanitized.file = String(sanitized.file);
+        }
+        // Сохраняем background как boolean
+        if (sanitized.background !== undefined && sanitized.background !== null) {
+          sanitized.background = Boolean(sanitized.background);
+        }
+        // Убеждаемся, что type сохраняется
+        if (sanitized.type) {
+          sanitized.type = String(sanitized.type);
+        }
+      }
+      
+      return sanitized;
+    });
+    
+    gltf.scenes[0].extras.env = sanitizedEnvParams;
     
     // Сохраняем обновленный GLTF файл
-    await fs.writeFile(filePath, JSON.stringify(gltf, null, 2), 'utf-8');
+    await fs.writeFile(fullPath, JSON.stringify(gltf, null, 2), 'utf-8');
     
     return {
-      filename: gltfFile,
+      filename: path.basename(fullPath),
       envCount: envParams.length,
       message: 'GLTF env parameters updated successfully'
     };
   } catch (error) {
-    console.error('Error updating uploadlab GLTF env:', error);
-    throw error;
-  }
-};
-
-const getUploadLabGltfEnvStructure = async () => {
-  try {
-    const uploadLabDir = path.join(uploadDir, 'uploadlab');
-    
-    // Проверяем, существует ли папка uploadlab
-    try {
-      await fs.access(uploadLabDir);
-    } catch (error) {
-      return { error: 'Uploadlab directory does not exist' };
-    }
-    
-    // Получаем список файлов в папке uploadlab
-    const files = await fs.readdir(uploadLabDir);
-    
-    if (files.length === 0) {
-      return { error: 'No files in uploadlab' };
-    }
-    
-    // Ищем GLTF файл
-    const gltfFile = files.find(file => file.endsWith('.gltf'));
-    
-    if (!gltfFile) {
-      return { error: 'No GLTF file found in uploadlab' };
-    }
-    
-    const filePath = path.join(uploadLabDir, gltfFile);
-    
-    // Читаем GLTF файл
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const gltf = JSON.parse(fileContent);
-    
-    // Извлекаем объект env
-    const env = gltf.scenes?.[0]?.extras?.env;
-    
-    if (!env || !Array.isArray(env)) {
-      return { error: 'No env array found in GLTF file' };
-    }
-    
-    // Возвращаем полную структуру env
-    return {
-      filename: gltfFile,
-      envStructure: env,
-      envCount: env.length,
-      fullExtras: gltf.scenes?.[0]?.extras || null
-    };
-  } catch (error) {
-    console.error('Error reading uploadlab GLTF env structure:', error);
+    console.error('Error updating GLTF env:', error);
     throw error;
   }
 };
@@ -583,10 +473,6 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  getUploadLabFile,
-  deleteUploadLabFile,
-  getUploadLabGltfEnvTypes,
-  getUploadLabGltfEnvStructure,
-  updateUploadLabGltfEnv
+  updateGltfEnv
 };
 

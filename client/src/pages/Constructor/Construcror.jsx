@@ -8,21 +8,6 @@ import Controller from './Controller';
 import { buildGltfHelper } from '../../utils/gltfHelper';
 import { EnvEditorPanel } from '../../components/EnvEditor/EnvEditorPanel';
 
-// Проверка, является ли файл файлом из uploadlab
-// Определяем вне компонента, чтобы избежать проблем с инициализацией
-const isUploadLabFile = (filePath) => {
-  if (!filePath) {
-    return false;
-  }
-  // Проверяем различные варианты URL для файлов из uploadlab
-  // Может быть: /uploads/uploadlab/, /uploadlab/, или просто uploadlab в пути
-  const isLab = filePath.includes('/uploads/uploadlab/') || 
-                filePath.includes('/uploadlab/') ||
-                (filePath.includes('uploadlab') && !filePath.includes('/uploads/'));
-  
-  return isLab;
-};
-
 const Constructor = () => {
   const navigate = useNavigate();
   const authenticated = isAuthenticated();
@@ -32,7 +17,6 @@ const Constructor = () => {
   const [username, setUsername] = useState(null);
   const [currentProject, setCurrentProject] = useState(null);
   const [currentPath, setCurrentPath] = useState(null);
-  const [currentFileIsUploadLab, setCurrentFileIsUploadLab] = useState(false);
   const [gltf, setGltf] = useState(null);
   const [gltfHelper, setGltfHelper] = useState(null);
   const [meshGroups, setMeshGroups] = useState({ defaultMeshes: [], groups: {} });
@@ -108,40 +92,6 @@ const Constructor = () => {
         const files = await uploadService.getFilesForConstructor();
         const models = await constructorService.userModelsNames(files);
         
-        // Если пользователь - администратор, загружаем файл из uploadlab
-        if (userIsAdmin) {
-          try {
-            const labFile = await uploadService.getUploadLabFile();
-            if (labFile && labFile.file) {
-              const labFileUrl = labFile.file.url || `/uploads/uploadlab/${labFile.file.filename}`;
-              
-              // Проверяем, нет ли уже такого файла в списке (по URL или filename)
-              const fileExists = files.some(f => 
-                f.url === labFileUrl || 
-                f.filename === labFile.file.filename ||
-                (f.url && f.url.includes('/uploadlab/') && labFileUrl.includes('/uploadlab/'))
-              );
-              
-              if (!fileExists) {
-                // Добавляем файл из uploadlab в список
-                const labFileWithUrl = {
-                  ...labFile.file,
-                  url: labFileUrl,
-                  isUploadLab: true // Добавляем флаг для идентификации
-                };
-                files.push(labFileWithUrl);
-                
-                const labModelName = labFile.file.filename.replace(/[^a-zA-Z]/g, '');
-                if (labModelName && !models.includes(labModelName)) {
-                  models.push(labModelName);
-                }
-              }
-            }
-          } catch (e) {
-            // Игнорируем ошибку, если файла нет в uploadlab
-          }
-        }
-        
         // Устанавливаем финальные списки
         setUserFiles(files);
         setUserModelsNames(models);
@@ -162,7 +112,6 @@ const Constructor = () => {
 
     if (!selectedFile) {
       setCurrentPath(null);
-      setCurrentFileIsUploadLab(false);
       currentPathRef.current = null;
       // Очищаем gltf и gltfHelper при отсутствии файла
       setGltf(null);
@@ -173,9 +122,7 @@ const Constructor = () => {
 
     // Устанавливаем путь к выбранному GLTF файлу
     const filePath = getFileUrl(selectedFile.url);
-    const isLab = selectedFile.isUploadLab || isUploadLabFile(filePath);
     setCurrentPath(filePath);
-    setCurrentFileIsUploadLab(isLab);
     currentPathRef.current = filePath; // Сохраняем в ref для доступа в handleGltfLoad
   }, [userFiles]);
 
@@ -184,7 +131,6 @@ const Constructor = () => {
     if (!currentPath) {
       gltfRef.current = null;
       currentPathRef.current = null;
-      setCurrentFileIsUploadLab(false);
       setGltf(null);
       setGltfHelper(null);
       setMeshGroups({ defaultMeshes: [], groups: {} });
@@ -238,44 +184,104 @@ const Constructor = () => {
 
   // Обработчик обновления env параметров
   const handleEnvParamsUpdate = useCallback((updatedParams) => {
-    // Проверяем, действительно ли параметры изменились
-    const currentParams = envParamsRef.current;
-    try {
-      if (JSON.stringify(currentParams) === JSON.stringify(updatedParams)) {
-        return; // Параметры не изменились, не обновляем
-      }
-    } catch (e) {
-      // Если JSON.stringify не работает, обновляем в любом случае
-    }
-    
+    // Всегда обновляем состояние для визуального отображения
     envParamsRef.current = updatedParams;
     setEnvParams(updatedParams);
     
-    // Сохраняем на сервер только если файл из uploadlab и пользователь - администратор
-    if (!currentFileIsUploadLab && !isUploadLabFile(currentPath)) {
-      return; // Не сохраняем, если файл не из uploadlab
+    // Сохраняем на сервер только если пользователь - администратор и файл - GLTF
+    const shouldSave = userIsAdmin && currentPath && currentPath.endsWith('.gltf');
+    
+    // Показываем индикатор сохранения, если пользователь - администратор
+    if (userIsAdmin && currentPath && currentPath.endsWith('.gltf')) {
+      // Очищаем предыдущий timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      // Показываем индикатор сохранения сразу
+      setIsSaving(true);
     }
     
-    if (!userIsAdmin) {
-      return; // Не сохраняем, если пользователь не администратор
+    if (!shouldSave) {
+      return; // Не сохраняем, если пользователь не администратор или файл не GLTF
     }
-    
-    // Очищаем предыдущий timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    // Сохраняем с задержкой 500ms
-    setIsSaving(true);
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        await uploadService.updateUploadLabGltfEnv(updatedParams);
+        // Убеждаемся, что передаем полный массив параметров
+        // Используем актуальные параметры из ref на момент сохранения
+        const paramsToSave = envParamsRef.current || updatedParams;
+        
+        // Убеждаемся, что это массив
+        if (!Array.isArray(paramsToSave) || paramsToSave.length === 0) {
+          setIsSaving(false);
+          return;
+        }
+        
+        // Копируем параметры, чтобы убедиться, что все значения правильно сериализуются
+        const sanitizedParams = paramsToSave.map(param => {
+          if (!param || typeof param !== 'object') {
+            return param;
+          }
+          
+          const sanitized = { ...param };
+          
+          // Убеждаемся, что все числовые значения правильно преобразованы
+          if (sanitized.intensity !== undefined && sanitized.intensity !== null) {
+            sanitized.intensity = Number(sanitized.intensity);
+          }
+          if (sanitized.red !== undefined && sanitized.red !== null) {
+            sanitized.red = Number(sanitized.red);
+          }
+          if (sanitized.green !== undefined && sanitized.green !== null) {
+            sanitized.green = Number(sanitized.green);
+          }
+          if (sanitized.blue !== undefined && sanitized.blue !== null) {
+            sanitized.blue = Number(sanitized.blue);
+          }
+          
+          // Для environment параметров сохраняем все свойства
+          if (sanitized.type === 'environment') {
+            // Сохраняем file как есть (строка)
+            if (sanitized.file !== undefined && sanitized.file !== null) {
+              sanitized.file = String(sanitized.file);
+            }
+            // Сохраняем background как boolean
+            if (sanitized.background !== undefined && sanitized.background !== null) {
+              sanitized.background = Boolean(sanitized.background);
+            }
+          }
+          
+          return sanitized;
+        });
+        
+        // Сохраняем env параметры в текущий открытый файл
+        const result = await uploadService.updateGltfEnv(currentPath, sanitizedParams);
         setIsSaving(false);
+        
+        // После успешного сохранения обновляем envParams из сохраненного файла
+        // Это гарантирует, что HDRI применится с правильными параметрами
+        if (currentPath && currentPath.endsWith('.gltf')) {
+          try {
+            // Добавляем timestamp к URL для обхода кеша
+            const cacheBuster = `?t=${Date.now()}`;
+            const response = await fetch(currentPath + cacheBuster);
+            if (response.ok) {
+              const gltfJson = await response.json();
+              const env = gltfJson.scenes?.[0]?.extras?.env;
+              if (env && Array.isArray(env) && env.length > 0) {
+                setEnvParams(env);
+                envParamsRef.current = env;
+              }
+            }
+          } catch (error) {
+            // Игнорируем ошибку загрузки, используем уже сохраненные параметры
+          }
+        }
       } catch (error) {
         setIsSaving(false);
       }
     }, 500);
-  }, [currentFileIsUploadLab, currentPath, userIsAdmin]);
+  }, [currentPath, userIsAdmin]);
 
 
   return (

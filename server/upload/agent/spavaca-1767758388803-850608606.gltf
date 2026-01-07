@@ -9,10 +9,10 @@
       "extras": {
         "env": [
           {
-            "type": "background",
-            "name": "Background",
-            "file": "/img/skyTwo.exr",
-            "intensity": 0.04000000000000001
+            "type": "environment",
+            "file": "/img/HDRI_sea.hdr",
+            "intensity": 1.8,
+            "background": true
           },
           {
             "type": "camera",

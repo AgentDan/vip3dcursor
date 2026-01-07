@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
+import { Environment } from '@react-three/drei';
+import { Suspense } from 'react';
 import * as THREE from 'three';
 
 /**
@@ -10,19 +12,100 @@ export function EnvParamsController({ gltf, envParams }) {
   const { gl, scene } = useThree();
   const paramsRef = useRef({});
   const appliedParamsRef = useRef({});
+  const [hdriConfig, setHdriConfig] = useState(null);
 
   useEffect(() => {
-    if (!gltf?.scene || !envParams || envParams.length === 0) return;
+    if (!gltf?.scene || !envParams || envParams.length === 0) {
+      // Если параметров нет, сбрасываем background и HDRI
+      if (gl?.domElement) {
+        const canvas = gl.domElement;
+        canvas.style.background = '';
+        canvas.style.backgroundColor = '';
+        canvas.style.setProperty('background-color', '', 'important');
+      }
+      setHdriConfig(null);
+      return;
+    }
 
     // Применяем параметры к сцене
     envParams.forEach((param, index) => {
       if (!param || !param.type) return;
 
       const paramKey = `${param.type}_${index}`;
+
+      // Для background ВСЕГДА применяем изменения без проверки
+      if (param.type === 'background') {
+        applyBackground(gl, param);
+        // Не сохраняем в appliedParamsRef для background, чтобы всегда применялось
+        return;
+      }
+
+      // Для environment обрабатываем HDRI - ВСЕГДА применяем изменения
+      if (param.type === 'environment') {
+        // Формируем путь к HDRI файлу
+        let hdriPath = null;
+        if (param.file) {
+          const hdriFile = param.file;
+          if (hdriFile.startsWith('http://') || hdriFile.startsWith('https://')) {
+            // Полный URL
+            hdriPath = hdriFile;
+          } else if (hdriFile.startsWith('/')) {
+            // Абсолютный путь от корня - преобразуем в относительный
+            const fileName = hdriFile.split('/').pop();
+            hdriPath = `./img/${fileName}`;
+          } else if (hdriFile.startsWith('./')) {
+            // Уже относительный путь
+            hdriPath = hdriFile;
+          } else {
+            // Просто имя файла или путь без слеша в начале
+            const fileName = hdriFile.split('/').pop();
+            hdriPath = `./img/${fileName}`;
+          }
+        }
+        
+        // Обновляем конфигурацию HDRI при каждом изменении
+        const newConfig = {
+          file: hdriPath,
+          intensity: param.intensity !== undefined ? Number(param.intensity) : 1.0,
+          background: param.background !== undefined ? param.background : true
+        };
+        
+        // Проверяем, изменилась ли конфигурация
+        const configChanged = !hdriConfig || 
+          hdriConfig.file !== newConfig.file ||
+          Math.abs((hdriConfig.intensity || 1.0) - newConfig.intensity) > 0.0001 ||
+          hdriConfig.background !== newConfig.background;
+        
+        if (configChanged) {
+          setHdriConfig(newConfig);
+        }
+        return;
+      }
+
+      // Для остальных типов проверяем изменения
       const lastApplied = appliedParamsRef.current[paramKey];
 
-      // Проверяем, изменились ли параметры
-      const hasChanged = !lastApplied || JSON.stringify(param) !== JSON.stringify(lastApplied);
+      // Для остальных типов проверяем изменения
+      let hasChanged = !lastApplied;
+      if (!hasChanged) {
+        // Проверяем изменения в ключевых полях
+        const keysToCheck = Object.keys(param);
+        for (const key of keysToCheck) {
+          const currentValue = param[key];
+          const lastValue = lastApplied[key];
+          
+          // Для чисел с плавающей точкой используем приблизительное сравнение
+          if (typeof currentValue === 'number' && typeof lastValue === 'number') {
+            if (Math.abs(currentValue - lastValue) > 0.0001) {
+              hasChanged = true;
+              break;
+            }
+          } else if (currentValue !== lastValue) {
+            hasChanged = true;
+            break;
+          }
+        }
+      }
 
       if (hasChanged) {
         applyParamToScene(gltf.scene, gl, scene, param);
@@ -31,7 +114,37 @@ export function EnvParamsController({ gltf, envParams }) {
     });
   }, [gltf, envParams, gl, scene]);
 
-  return null;
+  // Применяем интенсивность HDRI
+  useEffect(() => {
+    if (hdriConfig && hdriConfig.intensity !== undefined) {
+      // Используем requestAnimationFrame для применения после рендера
+      requestAnimationFrame(() => {
+        if (scene.environment) {
+          if (scene.environment.intensity !== undefined) {
+            scene.environment.intensity = hdriConfig.intensity;
+          }
+        }
+        // Также управляем через toneMappingExposure
+        if (gl) {
+          gl.toneMappingExposure = hdriConfig.intensity;
+        }
+      });
+    }
+  }, [hdriConfig, scene, gl]);
+
+  return (
+    <>
+      {hdriConfig && hdriConfig.file && (
+        <Suspense fallback={null}>
+          <Environment
+            key={`${hdriConfig.file}-${hdriConfig.intensity}-${hdriConfig.background}`}
+            files={hdriConfig.file}
+            background={hdriConfig.background !== false}
+          />
+        </Suspense>
+      )}
+    </>
+  );
 }
 
 /**
@@ -64,29 +177,52 @@ function applyParamToScene(gltfScene, gl, threeScene, param) {
  * Применяет параметры фона
  */
 function applyBackground(gl, param) {
-  if (!gl?.domElement || param.enabled === false) {
-    if (gl?.domElement) {
-      gl.domElement.style.background = 'transparent';
-    }
+  // gl.domElement - это canvas элемент
+  const canvas = gl?.domElement;
+  
+  if (!canvas) {
     return;
   }
 
-  const red = param.red ?? 255;
-  const green = param.green ?? 0;
-  const blue = param.blue ?? 0;
-  const intensity = param.intensity ?? 1.0;
+  // Если background отключен
+  if (param.enabled === false) {
+    canvas.style.background = 'transparent';
+    canvas.style.backgroundColor = 'transparent';
+    canvas.style.setProperty('background-color', 'transparent', 'important');
+    return;
+  }
 
+  // Получаем значения RGB (по умолчанию: red=255, green=0, blue=0)
+  const red = param.red !== undefined ? Number(param.red) : 255;
+  const green = param.green !== undefined ? Number(param.green) : 0;
+  const blue = param.blue !== undefined ? Number(param.blue) : 0;
+  
+  // Получаем intensity (по умолчанию 1.0)
+  // intensity применяется как множитель яркости цвета
+  const intensity = param.intensity !== undefined ? Number(param.intensity) : 1.0;
+
+  // Применяем intensity как множитель яркости
+  // Если intensity = 0, то цвет черный
+  // Если intensity = 1, то цвет без изменений
+  // Если intensity > 1, то цвет становится ярче (но ограничиваем до 255)
   const r = Math.round(red * intensity);
   const g = Math.round(green * intensity);
   const b = Math.round(blue * intensity);
 
+  // Ограничиваем значения от 0 до 255
   const clampedR = Math.min(255, Math.max(0, r));
   const clampedG = Math.min(255, Math.max(0, g));
   const clampedB = Math.min(255, Math.max(0, b));
 
   const finalColor = `rgb(${clampedR}, ${clampedG}, ${clampedB})`;
 
-  gl.domElement.style.background = finalColor;
+  // Принудительно обновляем background через все возможные способы
+  canvas.style.background = finalColor;
+  canvas.style.backgroundColor = finalColor;
+  canvas.style.setProperty('background-color', finalColor, 'important');
+  
+  // Также пробуем установить через setAttribute для гарантии
+  canvas.setAttribute('style', `background-color: ${finalColor} !important; background: ${finalColor} !important;`);
 }
 
 /**
@@ -175,17 +311,6 @@ function applyCamera(threeScene, param) {
   // Например, через scene.camera если доступно
 }
 
-/**
- * Применяет параметры окружения
- */
-function applyEnvironment(threeScene, param) {
-  if (param.intensity !== undefined && threeScene.environment) {
-    // Управление яркостью окружения
-    if (threeScene.environment.intensity !== undefined) {
-      threeScene.environment.intensity = param.intensity;
-    }
-  }
-}
 
 /**
  * Применяет общие параметры к узлам сцены
