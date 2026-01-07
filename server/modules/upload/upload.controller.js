@@ -132,59 +132,6 @@ const getGltfInfo = async (req, res) => {
   }
 };
 
-const getLaboratoryFile = async (req, res) => {
-  try {
-    const file = await uploadService.getLaboratoryFile();
-    if (!file) {
-      return res.status(200).json({ file: null, message: 'No file in laboratory' });
-    }
-    res.status(200).json({ file });
-  } catch (error) {
-    console.error('Get laboratory file error:', error);
-    res.status(500).json({ error: error.message || 'Failed to get laboratory file' });
-  }
-};
-
-const uploadLaboratoryFile = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    // Удаляем старый файл, если он есть
-    await uploadService.deleteLaboratoryFile();
-
-    const filePath = `/uploads/laboratory/${req.file.filename}`;
-
-    const fileInfo = {
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      path: req.file.path,
-      size: req.file.size,
-      mimetype: req.file.mimetype,
-      url: filePath
-    };
-
-    res.status(201).json({
-      message: 'Laboratory file uploaded successfully',
-      file: fileInfo
-    });
-  } catch (error) {
-    console.error('Upload laboratory file error:', error);
-    res.status(500).json({ error: error.message || 'Failed to upload laboratory file' });
-  }
-};
-
-const deleteLaboratoryFile = async (req, res) => {
-  try {
-    await uploadService.deleteLaboratoryFile();
-    res.status(200).json({ message: 'Laboratory file deleted successfully' });
-  } catch (error) {
-    console.error('Delete laboratory file error:', error);
-    res.status(500).json({ error: error.message || 'Failed to delete laboratory file' });
-  }
-};
-
 const getUploadLabFile = async (req, res) => {
   try {
     const file = await uploadService.getUploadLabFile();
@@ -279,6 +226,27 @@ const getUploadLabGltfEnvStructure = async (req, res) => {
   }
 };
 
+const updateUploadLabGltfEnv = async (req, res) => {
+  try {
+    // Проверяем права администратора
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const { env } = req.body;
+    
+    if (!env || !Array.isArray(env)) {
+      return res.status(400).json({ error: 'env parameter must be an array' });
+    }
+    
+    const result = await uploadService.updateUploadLabGltfEnv(env);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Update uploadlab GLTF env error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update uploadlab GLTF env' });
+  }
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
@@ -288,13 +256,11 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  getLaboratoryFile,
-  uploadLaboratoryFile,
-  deleteLaboratoryFile,
   getUploadLabFile,
   uploadUploadLabFile,
   deleteUploadLabFile,
   getUploadLabGltfEnvTypes,
-  getUploadLabGltfEnvStructure
+  getUploadLabGltfEnvStructure,
+  updateUploadLabGltfEnv
 };
 

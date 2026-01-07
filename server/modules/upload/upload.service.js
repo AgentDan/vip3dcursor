@@ -323,70 +323,6 @@ const getGltfInfo = async (filename, username) => {
   }
 };
 
-const getLaboratoryFile = async () => {
-  try {
-    const laboratoryDir = path.join(uploadDir, 'laboratory');
-    
-    // Проверяем, существует ли папка лаборатории
-    try {
-      await fs.access(laboratoryDir);
-    } catch (error) {
-      // Если папки нет, возвращаем null
-      return null;
-    }
-    
-    // Получаем список файлов в папке лаборатории
-    const files = await fs.readdir(laboratoryDir);
-    
-    if (files.length === 0) {
-      return null;
-    }
-    
-    // Возвращаем первый файл (в лаборатории только один файл)
-    const filename = files[0];
-    const filePath = path.join(laboratoryDir, filename);
-    const stats = await fs.stat(filePath);
-    
-    return {
-      filename,
-      size: stats.size,
-      createdAt: stats.birthtime,
-      modifiedAt: stats.mtime,
-      url: `/uploads/laboratory/${filename}`,
-      path: filePath
-    };
-  } catch (error) {
-    console.error('Error reading laboratory file:', error);
-    throw error;
-  }
-};
-
-const deleteLaboratoryFile = async () => {
-  try {
-    const laboratoryDir = path.join(uploadDir, 'laboratory');
-    
-    // Проверяем, существует ли папка лаборатории
-    try {
-      await fs.access(laboratoryDir);
-    } catch (error) {
-      // Если папки нет, ничего не делаем
-      return;
-    }
-    
-    // Получаем список файлов в папке лаборатории
-    const files = await fs.readdir(laboratoryDir);
-    
-    // Удаляем все файлы (в лаборатории должен быть только один файл)
-    for (const file of files) {
-      const filePath = path.join(laboratoryDir, file);
-      await fs.unlink(filePath);
-    }
-  } catch (error) {
-    console.error('Error deleting laboratory file:', error);
-    throw error;
-  }
-};
-
 const getUploadLabFile = async () => {
   try {
     const uploadLabDir = path.join(uploadDir, 'uploadlab');
@@ -531,6 +467,64 @@ const getUploadLabGltfEnvTypes = async () => {
   }
 };
 
+const updateUploadLabGltfEnv = async (envParams) => {
+  try {
+    const uploadLabDir = path.join(uploadDir, 'uploadlab');
+    
+    // Проверяем, существует ли папка uploadlab
+    try {
+      await fs.access(uploadLabDir);
+    } catch (error) {
+      throw new Error('Uploadlab directory does not exist');
+    }
+    
+    // Получаем список файлов в папке uploadlab
+    const files = await fs.readdir(uploadLabDir);
+    
+    if (files.length === 0) {
+      throw new Error('No files in uploadlab');
+    }
+    
+    // Находим GLTF файл
+    const gltfFile = files.find(file => file.endsWith('.gltf'));
+    if (!gltfFile) {
+      throw new Error('No GLTF file found in uploadlab');
+    }
+    
+    const filePath = path.join(uploadLabDir, gltfFile);
+    
+    // Читаем GLTF файл
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const gltf = JSON.parse(fileContent);
+    
+    // Инициализируем структуру, если её нет
+    if (!gltf.scenes) {
+      gltf.scenes = [{}];
+    }
+    if (!gltf.scenes[0]) {
+      gltf.scenes[0] = {};
+    }
+    if (!gltf.scenes[0].extras) {
+      gltf.scenes[0].extras = {};
+    }
+    
+    // Обновляем env параметры
+    gltf.scenes[0].extras.env = envParams;
+    
+    // Сохраняем обновленный GLTF файл
+    await fs.writeFile(filePath, JSON.stringify(gltf, null, 2), 'utf-8');
+    
+    return {
+      filename: gltfFile,
+      envCount: envParams.length,
+      message: 'GLTF env parameters updated successfully'
+    };
+  } catch (error) {
+    console.error('Error updating uploadlab GLTF env:', error);
+    throw error;
+  }
+};
+
 const getUploadLabGltfEnvStructure = async () => {
   try {
     const uploadLabDir = path.join(uploadDir, 'uploadlab');
@@ -589,11 +583,10 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  getLaboratoryFile,
-  deleteLaboratoryFile,
   getUploadLabFile,
   deleteUploadLabFile,
   getUploadLabGltfEnvTypes,
-  getUploadLabGltfEnvStructure
+  getUploadLabGltfEnvStructure,
+  updateUploadLabGltfEnv
 };
 

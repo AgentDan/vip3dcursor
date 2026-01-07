@@ -10,7 +10,7 @@ import { Scene3D } from '../../components/Scene3D/Scene3D';
  * - Schema загружается один раз
  * - Видимость обновляется только при смене selectedMeshes
  */
-const Controller = ({ gltf, gltfHelper, currentPath, onGltfLoad, selectedMeshes, onMeshesGrouped }) => {
+const Controller = ({ gltf, gltfHelper, currentPath, onGltfLoad, selectedMeshes, onMeshesGrouped, envParams }) => {
   const [schema, setSchema] = useState(null);
   const [meshGroups, setMeshGroups] = useState({ defaultMeshes: [], groups: {} });
 
@@ -90,6 +90,7 @@ const Controller = ({ gltf, gltfHelper, currentPath, onGltfLoad, selectedMeshes,
       meshGroups={meshGroups}
       schema={schema}
       onGltfLoad={onGltfLoad}
+      envParams={envParams}
     />
   );
 };

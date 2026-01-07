@@ -196,76 +196,6 @@ const getGltfInfo = async (filename, username) => {
   return await response.json();
 };
 
-const getLaboratoryFile = async () => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_URL}/laboratory/file`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to get laboratory file');
-  }
-
-  return await response.json();
-};
-
-const uploadLaboratoryFile = async (file) => {
-  const token = localStorage.getItem('token');
-  
-  if (!token) {
-    throw new Error('No authentication token found');
-  }
-  
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  const response = await fetch(`${API_URL}/laboratory/file`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    },
-    body: formData
-  });
-
-  if (!response.ok) {
-    let errorMessage = 'Failed to upload laboratory file';
-    try {
-      const error = await response.json();
-      errorMessage = error.error || errorMessage;
-    } catch (e) {
-      errorMessage = `Server error: ${response.status} ${response.statusText}`;
-    }
-    throw new Error(errorMessage);
-  }
-
-  return await response.json();
-};
-
-const deleteLaboratoryFile = async () => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_URL}/laboratory/file`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to delete laboratory file');
-  }
-
-  return await response.json();
-};
-
 const getUploadLabFile = async () => {
   const token = localStorage.getItem('token');
   
@@ -374,6 +304,26 @@ const getUploadLabGltfEnvStructure = async () => {
   return await response.json();
 };
 
+const updateUploadLabGltfEnv = async (envParams) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/uploadlab/gltf/env`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ env: envParams })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update uploadlab GLTF env');
+  }
+
+  return await response.json();
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
@@ -384,13 +334,11 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  getLaboratoryFile,
-  uploadLaboratoryFile,
-  deleteLaboratoryFile,
   getUploadLabFile,
   uploadUploadLabFile,
   deleteUploadLabFile,
   getUploadLabGltfEnvTypes,
-  getUploadLabGltfEnvStructure
+  getUploadLabGltfEnvStructure,
+  updateUploadLabGltfEnv
 };
 

@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import uploadController from './upload.controller.js';
-import { authenticate } from '../../middleware/auth.middleware.js';
+import { authenticate, isAdmin } from '../../middleware/auth.middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,14 +15,12 @@ const storage = multer.diskStorage({
     try {
       let uploadPath = path.join(__dirname, '../../upload');
       
-      // Проверяем, является ли это запросом на загрузку в лабораторию или uploadlab
+      // Проверяем, является ли это запросом на загрузку в uploadlab
       // Используем req.originalUrl или req.url для более надежной проверки
       const url = (req.originalUrl || req.url || req.path || '').toLowerCase();
       
       if (url.includes('/uploadlab/file') || url.includes('/uploadlab')) {
         uploadPath = path.join(uploadPath, 'uploadlab');
-      } else if (url.includes('/laboratory/file') || url.includes('/laboratory')) {
-        uploadPath = path.join(uploadPath, 'laboratory');
       } else {
         // Если указан username, сохраняем в папку пользователя
         const username = req.params.username || req.body.username || req.query.username;
@@ -54,9 +52,9 @@ const storage = multer.diskStorage({
 
 // Фильтр файлов - разрешаем только определенные типы
 const fileFilter = (req, file, cb) => {
-  // Для лаборатории и uploadlab разрешаем все типы файлов
+  // Для uploadlab разрешаем все типы файлов
   const url = (req.originalUrl || req.url || '').toLowerCase();
-  if (url.includes('/laboratory/file') || url.includes('/uploadlab/file')) {
+  if (url.includes('/uploadlab/file')) {
     cb(null, true);
     return;
   }
@@ -107,20 +105,14 @@ router.put('/gltf/:username/:filename/background', authenticate, uploadControlle
 // Получить информацию и экстрасы из GLTF файла
 router.get('/gltf/:username/:filename/info', authenticate, uploadController.getGltfInfo);
 
-// Получить файл лаборатории
-router.get('/laboratory/file', authenticate, uploadController.getLaboratoryFile);
-
-// Загрузить файл в лабораторию (требует аутентификации)
-router.post('/laboratory/file', authenticate, upload.single('file'), uploadController.uploadLaboratoryFile);
-
-// Удалить файл из лаборатории (требует аутентификации)
-router.delete('/laboratory/file', authenticate, uploadController.deleteLaboratoryFile);
-
 // Получить все типы из env объекта GLTF файла в uploadlab (должен быть ПЕРЕД /uploadlab/file)
 router.get('/uploadlab/gltf/env/types', authenticate, uploadController.getUploadLabGltfEnvTypes);
 
 // Получить полную структуру env из GLTF файла в uploadlab (должен быть ПЕРЕД /uploadlab/file)
 router.get('/uploadlab/gltf/env/structure', authenticate, uploadController.getUploadLabGltfEnvStructure);
+
+// Обновить env параметры в GLTF файле из uploadlab (только для администраторов)
+router.put('/uploadlab/gltf/env', authenticate, isAdmin, uploadController.updateUploadLabGltfEnv);
 
 // Получить файл из uploadlab
 router.get('/uploadlab/file', authenticate, uploadController.getUploadLabFile);

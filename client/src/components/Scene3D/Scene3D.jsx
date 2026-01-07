@@ -1,10 +1,11 @@
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { GltfLoader } from './GltfLoader';
 import { CameraController } from './CameraController';
 import { MeshVisibilityController } from './MeshVisibilityController';
 import { GltfScene } from './GltfScene';
+import { EnvParamsController } from '../EnvEditor/EnvParamsController';
 
 /**
  * Основной компонент 3D сцены
@@ -17,9 +18,17 @@ export function Scene3D({
   selectedMeshes,
   meshGroups,
   schema,
-  onGltfLoad
+  onGltfLoad,
+  envParams
 }) {
   const showEmptyCanvas = !gltf || !gltf.scene;
+  const [contextLost, setContextLost] = useState(false);
+  const [canvasKey, setCanvasKey] = useState(0);
+
+  useEffect(() => {
+    // Сбрасываем флаг потери контекста при изменении пути
+    setContextLost(false);
+  }, [currentPath]);
 
   return (
     <div className="fixed inset-0 w-screen h-screen">
@@ -33,25 +42,49 @@ export function Scene3D({
           </div>
         }
       >
+        {contextLost && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white/90 rounded-lg p-6 text-center shadow-xl">
+              <p className="text-gray-800 mb-2">WebGL контекст потерян</p>
+              <p className="text-gray-600 text-sm">Восстановление...</p>
+            </div>
+          </div>
+        )}
         <Canvas
+          key={canvasKey}
           camera={{ position: [0, 0, 5], fov: 50 }}
           gl={{ 
             antialias: true,
             preserveDrawingBuffer: true,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            alpha: false,
+            depth: true,
+            stencil: false,
+            failIfMajorPerformanceCaveat: false
           }}
           onCreated={({ gl }) => {
             // Обработка потери контекста WebGL
             const canvas = gl.domElement;
             
-            canvas.addEventListener('webglcontextlost', (event) => {
+            const contextLostHandler = (event) => {
               event.preventDefault();
-              console.warn('WebGL context lost - attempting to restore...');
-            });
+              setContextLost(true);
+            };
             
-            canvas.addEventListener('webglcontextrestored', () => {
-              console.log('WebGL context restored successfully');
-            });
+            const contextRestoredHandler = () => {
+              setContextLost(false);
+              // Принудительно пересоздаем Canvas для восстановления
+              setCanvasKey(prev => prev + 1);
+            };
+            
+            canvas.addEventListener('webglcontextlost', contextLostHandler);
+            canvas.addEventListener('webglcontextrestored', contextRestoredHandler);
+            
+            // Очистка при размонтировании
+            return () => {
+              canvas.removeEventListener('webglcontextlost', contextLostHandler);
+              canvas.removeEventListener('webglcontextrestored', contextRestoredHandler);
+            };
           }}
           style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}
         >
@@ -74,6 +107,9 @@ export function Scene3D({
                 meshGroups={meshGroups}
               />
               <GltfScene gltf={gltf} schema={schema} gltfHelper={gltfHelper} />
+              {envParams && envParams.length > 0 && (
+                <EnvParamsController gltf={gltf} envParams={envParams} />
+              )}
             </>
           )}
 
