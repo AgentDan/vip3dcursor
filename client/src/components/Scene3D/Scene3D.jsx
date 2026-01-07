@@ -6,6 +6,7 @@ import { CameraController } from './CameraController';
 import { MeshVisibilityController } from './MeshVisibilityController';
 import { GltfScene } from './GltfScene';
 import { EnvParamsController } from '../EnvEditor/EnvParamsController';
+import { SpotLightVisualizer } from './SpotLightVisualizer';
 
 /**
  * Основной компонент 3D сцены
@@ -132,7 +133,13 @@ export function Scene3D({
               />
               <GltfScene gltf={gltf} schema={schema} gltfHelper={gltfHelper} />
               {envParams && envParams.length > 0 && (
-                <EnvParamsController gltf={gltf} envParams={envParams} />
+                <>
+                  <EnvParamsController gltf={gltf} envParams={envParams} />
+                  <SpotLightVisualizer 
+                    key={JSON.stringify(envParams.filter(p => p.type === 'spotlight'))} 
+                    envParams={envParams} 
+                  />
+                </>
               )}
             </>
           )}

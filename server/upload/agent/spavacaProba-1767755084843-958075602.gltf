@@ -11,22 +11,7 @@
           {
             "type": "light",
             "name": "DefaultLight",
-            "intensity": 1.6,
-            "color": [
-              255,
-              255,
-              255
-            ],
-            "position": [
-              0,
-              5,
-              5
-            ]
-          },
-          {
-            "type": "light",
-            "name": "DefaultLight",
-            "intensity": 1.6,
+            "intensity": 1,
             "color": [
               255,
               255,
@@ -41,8 +26,75 @@
           {
             "type": "environment",
             "file": "/img/HDRI_sea.hdr",
-            "intensity": 0.6,
+            "intensity": 0.05,
             "background": true
+          },
+          {
+            "type": "spotlight",
+            "name": "SpotLightOne",
+            "position": [
+              0,
+              0,
+              -4.02
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "intensity": 10.8,
+            "onoff": false,
+            "visible": true,
+            "color": ""
+          },
+          {
+            "type": "spotlight",
+            "name": "SpotLightTwo",
+            "position": [
+              0,
+              0,
+              1.39
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "intensity": 22.8,
+            "onoff": false,
+            "visible": true,
+            "color": ""
+          },
+          {
+            "type": "spotlight",
+            "name": "SpotLightThee",
+            "position": [
+              0,
+              1.7,
+              1.24
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "intensity": 5,
+            "onoff": false,
+            "visible": true,
+            "color": ""
+          },
+          {
+            "type": "fog",
+            "enabled": true,
+            "fogType": "",
+            "color": [
+              0,
+              0,
+              0
+            ],
+            "near": 1,
+            "far": 4,
+            "density": 1
           }
         ],
         "jewelcraft": {

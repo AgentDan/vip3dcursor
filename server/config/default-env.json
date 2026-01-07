@@ -11,6 +11,44 @@
     "file": "/img/HDRI_sea.hdr",
     "intensity": 0.5,
     "background": true
+  },
+  {
+    "type": "spotlight",
+    "name": "SpotLightOne",
+    "position": [
+      14.804,
+      3.98,
+      0.8849999999999998
+    ],
+    "target": [
+      5.529,
+      1.444,
+      1.165
+    ],
+    "intensity": 0.3,
+    "onoff": true,
+    "visible": true,
+    "color": "red"
+  },
+  {
+    "type": "fog",
+    "enabled": true,
+    "fogType": "linear",
+    "color": [200, 200, 200],
+    "near": 1,
+    "far": 100,
+    "density": 0.00025
+  },
+  {
+    "type": "shadow",
+    "enabled": true,
+    "shadowType": "PCFSoft",
+    "autoUpdate": true,
+    "mapSize": [2048, 2048],
+    "bias": -0.0001,
+    "normalBias": 0.02,
+    "radius": 4.0,
+    "darkness": 0.5
   }
 ]
 

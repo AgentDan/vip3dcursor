@@ -11,7 +11,7 @@
           {
             "type": "environment",
             "file": "/img/HDRI_sea.hdr",
-            "intensity": 0.4,
+            "intensity": 1.5,
             "background": true
           },
           {
@@ -21,7 +21,7 @@
               0,
               0.1
             ],
-            "fov": 50
+            "fov": -40.3
           },
           {
             "type": "orbitcontrols",
@@ -36,55 +36,19 @@
             "type": "spotlight",
             "name": "SpotLightOne",
             "position": [
-              0.8040000000000002,
-              0.9800000000000001,
+              14.804,
+              3.98,
               0.8849999999999998
             ],
             "target": [
-              1.5290000000000001,
+              5.529,
               1.444,
               1.165
             ],
-            "intensity": 20,
+            "intensity": 0.3,
             "onoff": true,
-            "visible": false,
+            "visible": true,
             "color": "red"
-          },
-          {
-            "type": "spotlight",
-            "name": "SpotLightTwo",
-            "position": [
-              -0.17899999999999983,
-              -0.09299999999999986,
-              -0.5400000000000003
-            ],
-            "target": [
-              -0.455,
-              -0.355,
-              -1.1
-            ],
-            "intensity": 1.3,
-            "onoff": true,
-            "visible": false,
-            "color": "green"
-          },
-          {
-            "type": "spotlight",
-            "name": "SpotLightThree",
-            "position": [
-              -0.20799999999999996,
-              -0.04799999999999999,
-              -2.4510000000000005
-            ],
-            "target": [
-              0.2,
-              0.1,
-              -1.2
-            ],
-            "intensity": 2.5699999999999994,
-            "onoff": true,
-            "visible": false,
-            "color": "black"
           },
           {
             "type": "description",

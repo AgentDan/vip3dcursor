@@ -39,6 +39,18 @@ export function EnvParamsController({ gltf, envParams }) {
         return;
       }
 
+      // Для spotlight - визуализация через SpotLightVisualizer компонент
+      if (param.type === 'spotlight') {
+        // Spotlight обрабатывается отдельно в SpotLightVisualizer
+        return;
+      }
+
+      // Для fog - применяем туман к сцене
+      if (param.type === 'fog') {
+        applyFog(scene, param);
+        return;
+      }
+
       // Для environment обрабатываем HDRI - ВСЕГДА применяем изменения
       if (param.type === 'environment') {
         // Формируем путь к HDRI файлу
@@ -124,8 +136,11 @@ export function EnvParamsController({ gltf, envParams }) {
           }
         }
         // Также управляем через toneMappingExposure
+        // НО: если intensity = 0, устанавливаем минимальное значение (0.01),
+        // чтобы сцена не стала полностью черной
         if (gl) {
-          gl.toneMappingExposure = hdriConfig.intensity;
+          const exposure = hdriConfig.intensity > 0 ? hdriConfig.intensity : 0.01;
+          gl.toneMappingExposure = exposure;
         }
       });
     }
@@ -165,6 +180,13 @@ function applyParamToScene(gltfScene, gl, threeScene, param) {
       break;
     case 'environment':
       applyEnvironment(threeScene, param);
+      break;
+    case 'spotlight':
+      // Spotlight визуализируется через SpotLightVisualizer компонент
+      // Здесь можно применить дополнительные параметры, если нужно
+      break;
+    case 'fog':
+      applyFog(threeScene, param);
       break;
     default:
       // Применяем общие параметры, если они есть
@@ -337,5 +359,63 @@ function applyGenericParams(gltfScene, param) {
       }
     }
   });
+}
+
+/**
+ * Применяет параметры тумана
+ */
+function applyFog(threeScene, param) {
+  if (!threeScene) return;
+
+  // Если туман отключен, удаляем его
+  if (param.enabled === false) {
+    threeScene.fog = null;
+    return;
+  }
+
+  // Получаем цвет тумана
+  let fogColor = new THREE.Color();
+  if (param.color) {
+    if (typeof param.color === 'string') {
+      fogColor.set(param.color);
+    } else if (Array.isArray(param.color) && param.color.length === 3) {
+      fogColor.setRGB(param.color[0] / 255, param.color[1] / 255, param.color[2] / 255);
+    } else {
+      fogColor.set(0xcccccc); // Серый по умолчанию
+    }
+  } else {
+    fogColor.set(0xcccccc); // Серый по умолчанию
+  }
+
+  // Определяем тип тумана
+  const fogType = param.fogType || 'linear';
+
+  if (fogType === 'exponential') {
+    // Экспоненциальный туман (FogExp2)
+    const density = param.density !== undefined ? Number(param.density) : 0.00025;
+    
+    if (threeScene.fog && threeScene.fog.isFogExp2) {
+      // Обновляем существующий экспоненциальный туман
+      threeScene.fog.color.copy(fogColor);
+      threeScene.fog.density = density;
+    } else {
+      // Создаем новый экспоненциальный туман
+      threeScene.fog = new THREE.FogExp2(fogColor, density);
+    }
+  } else {
+    // Линейный туман (Fog)
+    const near = param.near !== undefined ? Number(param.near) : 1;
+    const far = param.far !== undefined ? Number(param.far) : 100;
+    
+    if (threeScene.fog && threeScene.fog.isFog) {
+      // Обновляем существующий линейный туман
+      threeScene.fog.color.copy(fogColor);
+      threeScene.fog.near = near;
+      threeScene.fog.far = far;
+    } else {
+      // Создаем новый линейный туман
+      threeScene.fog = new THREE.Fog(fogColor, near, far);
+    }
+  }
 }
 

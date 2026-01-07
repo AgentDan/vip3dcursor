@@ -101,55 +101,46 @@
         },
         "env": [
           {
-            "type": "light",
-            "name": "DefaultLight1111",
-            "intensity": 1,
-            "color": [
-              255,
-              255,
-              255
-            ],
-            "position": [
-              0,
-              5,
-              5
-            ]
-          },
-          {
-            "type": "light",
-            "name": "DefaultLight222",
-            "intensity": 1,
-            "color": [
-              255,
-              255,
-              255
-            ],
-            "position": [
-              0,
-              5,
-              5
-            ]
-          },
-          {
-            "type": "light",
-            "name": "DefaultLight333",
-            "intensity": 1,
-            "color": [
-              255,
-              255,
-              255
-            ],
-            "position": [
-              0,
-              5,
-              5
-            ]
-          },
-          {
             "type": "environment",
             "file": "/img/HDRI_sea.hdr",
-            "intensity": 0.5,
+            "intensity": 0.1,
             "background": true
+          },
+          {
+            "type": "spotlight",
+            "name": "SpotLightOne",
+            "position": [
+              -1.196,
+              1.98,
+              0.8849999999999998
+            ],
+            "target": [
+              -0.471,
+              0.444,
+              -0.835
+            ],
+            "intensity": 19,
+            "onoff": true,
+            "visible": true,
+            "color": "white"
+          },
+          {
+            "type": "spotlight",
+            "name": "SpotLightTwo",
+            "position": [
+              7.804,
+              5.98,
+              0.8849999999999998
+            ],
+            "target": [
+              -0.471,
+              0.444,
+              -0.835
+            ],
+            "intensity": 20,
+            "onoff": true,
+            "visible": true,
+            "color": "white"
           }
         ]
       },
