@@ -13,22 +13,33 @@ const __dirname = path.dirname(__filename);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
-      // Если указан username, сохраняем в папку пользователя
-      const username = req.params.username || req.body.username || req.query.username;
       let uploadPath = path.join(__dirname, '../../upload');
       
-      if (username) {
-        const normalizedUsername = username.toLowerCase().trim();
-        uploadPath = path.join(uploadPath, normalizedUsername);
-        
-        // Создаем папку, если её нет (синхронно)
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
+      // Проверяем, является ли это запросом на загрузку в лабораторию или uploadlab
+      // Используем req.originalUrl или req.url для более надежной проверки
+      const url = (req.originalUrl || req.url || req.path || '').toLowerCase();
+      
+      if (url.includes('/uploadlab/file') || url.includes('/uploadlab')) {
+        uploadPath = path.join(uploadPath, 'uploadlab');
+      } else if (url.includes('/laboratory/file') || url.includes('/laboratory')) {
+        uploadPath = path.join(uploadPath, 'laboratory');
+      } else {
+        // Если указан username, сохраняем в папку пользователя
+        const username = req.params.username || req.body.username || req.query.username;
+        if (username) {
+          const normalizedUsername = username.toLowerCase().trim();
+          uploadPath = path.join(uploadPath, normalizedUsername);
         }
+      }
+      
+      // Создаем папку, если её нет (синхронно)
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
       }
       
       cb(null, uploadPath);
     } catch (error) {
+      console.error('Multer destination error:', error);
       cb(error);
     }
   },
@@ -43,7 +54,14 @@ const storage = multer.diskStorage({
 
 // Фильтр файлов - разрешаем только определенные типы
 const fileFilter = (req, file, cb) => {
-  // Разрешаем .gltf, .glb и другие файлы
+  // Для лаборатории и uploadlab разрешаем все типы файлов
+  const url = (req.originalUrl || req.url || '').toLowerCase();
+  if (url.includes('/laboratory/file') || url.includes('/uploadlab/file')) {
+    cb(null, true);
+    return;
+  }
+  
+  // Для остальных загрузок разрешаем только определенные типы
   const allowedTypes = ['.gltf', '.glb', '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip'];
   const ext = path.extname(file.originalname).toLowerCase();
   
@@ -88,6 +106,30 @@ router.put('/gltf/:username/:filename/background', authenticate, uploadControlle
 
 // Получить информацию и экстрасы из GLTF файла
 router.get('/gltf/:username/:filename/info', authenticate, uploadController.getGltfInfo);
+
+// Получить файл лаборатории
+router.get('/laboratory/file', authenticate, uploadController.getLaboratoryFile);
+
+// Загрузить файл в лабораторию (требует аутентификации)
+router.post('/laboratory/file', authenticate, upload.single('file'), uploadController.uploadLaboratoryFile);
+
+// Удалить файл из лаборатории (требует аутентификации)
+router.delete('/laboratory/file', authenticate, uploadController.deleteLaboratoryFile);
+
+// Получить все типы из env объекта GLTF файла в uploadlab (должен быть ПЕРЕД /uploadlab/file)
+router.get('/uploadlab/gltf/env/types', authenticate, uploadController.getUploadLabGltfEnvTypes);
+
+// Получить полную структуру env из GLTF файла в uploadlab (должен быть ПЕРЕД /uploadlab/file)
+router.get('/uploadlab/gltf/env/structure', authenticate, uploadController.getUploadLabGltfEnvStructure);
+
+// Получить файл из uploadlab
+router.get('/uploadlab/file', authenticate, uploadController.getUploadLabFile);
+
+// Загрузить файл в uploadlab (требует аутентификации)
+router.post('/uploadlab/file', authenticate, upload.single('file'), uploadController.uploadUploadLabFile);
+
+// Удалить файл из uploadlab (требует аутентификации)
+router.delete('/uploadlab/file', authenticate, uploadController.deleteUploadLabFile);
 
 export default router;
 

@@ -375,8 +375,16 @@
    - Интеграция с BackgroundLightControls для управления освещением
 
 6. **Constructor.jsx** (в папке `pages/Constructor/`)
-   - Страница конструктора
-   - Базовый компонент для будущей функциональности
+   - Страница конструктора для интерактивного просмотра и управления 3D моделями
+   - Управление выбором моделей и групп мешей
+   - Оптимизирован для работы с большими сценами (500+ мешей)
+   - Компоненты:
+     - `Controller.jsx` - тонкий контроллер для управления 3D сценой
+     - `Scene3D` - основной компонент 3D сцены
+     - `GltfLoader` - загрузка GLTF файлов
+     - `CameraController` - автоматическое центрирование камеры
+     - `MeshVisibilityController` - управление видимостью мешей
+     - `GltfScene` - рендеринг сцены с применением schema
 
 6. **auth.service.js**
    - Сервис для взаимодействия с Auth API
@@ -707,16 +715,26 @@ client/src/
 │  ├─ Admin.jsx
 │  ├─ Model3D.jsx
 │  └─ Constructor/
-│     └─ Construcror.jsx   # Страница конструктора
+│     ├─ Construcror.jsx   # Главный компонент конструктора
+│     └─ Controller.jsx    # Тонкий контроллер для управления 3D сценой
 ├─ components/             # Переиспользуемые компоненты
-│  └─ LevaControls/
-│     └─ leva.jsx         # BackgroundLightControls для управления фоном 3D
+│  ├─ LevaControls/
+│  │  └─ leva.jsx         # BackgroundLightControls для управления фоном 3D
+│  └─ Scene3D/             # Компоненты для 3D сцены
+│     ├─ Scene3D.jsx      # Основной компонент 3D сцены
+│     ├─ GltfLoader.jsx   # Загрузка GLTF файлов
+│     ├─ CameraController.jsx  # Автоматическое центрирование камеры
+│     ├─ MeshVisibilityController.jsx  # Управление видимостью мешей
+│     └─ GltfScene.jsx    # Рендеринг GLTF сцены с применением schema
 ├─ services/
 │  ├─ auth.service.js
 │  ├─ admin.service.js
 │  └─ upload.service.js
 ├─ utils/
-│  └─ jwt.utils.js
+│  ├─ jwt.utils.js
+│  ├─ meshUtils.js        # Утилиты для работы с мешами (collectMeshes, groupMeshes)
+│  ├─ gltfHelper.js       # Утилиты для работы с GLTF (buildGltfHelper)
+│  └─ config.js           # Конфигурация (API_BASE_URL, getFileUrl)
 ├─ App.jsx
 └─ main.jsx
 ```

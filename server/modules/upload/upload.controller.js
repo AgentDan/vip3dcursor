@@ -1,4 +1,5 @@
 import uploadService from './upload.service.js';
+import fs from 'fs';
 
 const uploadFile = async (req, res) => {
   try {
@@ -131,6 +132,153 @@ const getGltfInfo = async (req, res) => {
   }
 };
 
+const getLaboratoryFile = async (req, res) => {
+  try {
+    const file = await uploadService.getLaboratoryFile();
+    if (!file) {
+      return res.status(200).json({ file: null, message: 'No file in laboratory' });
+    }
+    res.status(200).json({ file });
+  } catch (error) {
+    console.error('Get laboratory file error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get laboratory file' });
+  }
+};
+
+const uploadLaboratoryFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Удаляем старый файл, если он есть
+    await uploadService.deleteLaboratoryFile();
+
+    const filePath = `/uploads/laboratory/${req.file.filename}`;
+
+    const fileInfo = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      path: req.file.path,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      url: filePath
+    };
+
+    res.status(201).json({
+      message: 'Laboratory file uploaded successfully',
+      file: fileInfo
+    });
+  } catch (error) {
+    console.error('Upload laboratory file error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload laboratory file' });
+  }
+};
+
+const deleteLaboratoryFile = async (req, res) => {
+  try {
+    await uploadService.deleteLaboratoryFile();
+    res.status(200).json({ message: 'Laboratory file deleted successfully' });
+  } catch (error) {
+    console.error('Delete laboratory file error:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete laboratory file' });
+  }
+};
+
+const getUploadLabFile = async (req, res) => {
+  try {
+    const file = await uploadService.getUploadLabFile();
+    if (!file) {
+      return res.status(200).json({ file: null, message: 'No file in uploadlab' });
+    }
+    res.status(200).json({ file });
+  } catch (error) {
+    console.error('Get uploadlab file error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get uploadlab file' });
+  }
+};
+
+const uploadUploadLabFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      console.error('Upload uploadlab file - No file in request');
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Проверяем, существует ли файл физически
+    if (!fs.existsSync(req.file.path)) {
+      console.error('Upload uploadlab file - File does NOT exist at path:', req.file.path);
+      return res.status(500).json({ error: 'File was not saved correctly' });
+    }
+
+    // Удаляем старые файлы, КРОМЕ только что загруженного
+    await uploadService.deleteUploadLabFile(req.file.filename);
+
+    // Проверяем, что новый файл все еще существует после удаления старых
+    if (!fs.existsSync(req.file.path)) {
+      console.error('Upload uploadlab file - ERROR: New file was deleted!');
+      return res.status(500).json({ error: 'File was not saved correctly' });
+    }
+
+    const filePath = `/uploads/uploadlab/${req.file.filename}`;
+
+    const fileInfo = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      path: req.file.path,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      url: filePath
+    };
+
+    console.log('Upload uploadlab file - file info:', fileInfo);
+
+    res.status(201).json({
+      message: 'Uploadlab file uploaded successfully',
+      file: fileInfo
+    });
+  } catch (error) {
+    console.error('Upload uploadlab file error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload uploadlab file' });
+  }
+};
+
+const deleteUploadLabFile = async (req, res) => {
+  try {
+    await uploadService.deleteUploadLabFile();
+    res.status(200).json({ message: 'Uploadlab file deleted successfully' });
+  } catch (error) {
+    console.error('Delete uploadlab file error:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete uploadlab file' });
+  }
+};
+
+const getUploadLabGltfEnvTypes = async (req, res) => {
+  try {
+    const result = await uploadService.getUploadLabGltfEnvTypes();
+    if (result.error) {
+      return res.status(404).json({ error: result.error });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Get uploadlab GLTF env types error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get GLTF env types' });
+  }
+};
+
+const getUploadLabGltfEnvStructure = async (req, res) => {
+  try {
+    const result = await uploadService.getUploadLabGltfEnvStructure();
+    if (result.error) {
+      return res.status(404).json({ error: result.error });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Get uploadlab GLTF env structure error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get GLTF env structure' });
+  }
+};
+
 export default {
   uploadFile,
   uploadFileToUser,
@@ -139,6 +287,14 @@ export default {
   deleteFile,
   getGltfBackground,
   updateGltfBackground,
-  getGltfInfo
+  getGltfInfo,
+  getLaboratoryFile,
+  uploadLaboratoryFile,
+  deleteLaboratoryFile,
+  getUploadLabFile,
+  uploadUploadLabFile,
+  deleteUploadLabFile,
+  getUploadLabGltfEnvTypes,
+  getUploadLabGltfEnvStructure
 };
 

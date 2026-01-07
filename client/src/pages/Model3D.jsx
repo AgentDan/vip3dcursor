@@ -219,7 +219,22 @@ function Model3D() {
             >
               <Canvas
                 camera={{ position: [0, 0, 5], fov: 50 }}
-                gl={{ antialias: true }}
+                gl={{ 
+                  antialias: true,
+                  preserveDrawingBuffer: true,
+                  powerPreference: "high-performance"
+                }}
+                onCreated={({ gl }) => {
+                  // Обработка потери контекста
+                  const canvas = gl.domElement;
+                  canvas.addEventListener('webglcontextlost', (event) => {
+                    event.preventDefault();
+                    console.warn('WebGL context lost, attempting to restore...');
+                  });
+                  canvas.addEventListener('webglcontextrestored', () => {
+                    console.log('WebGL context restored');
+                  });
+                }}
                 style={{ width: '100%', height: '100%', background: 'transparent' }}
               >
                 <ambientLight intensity={0.5} />

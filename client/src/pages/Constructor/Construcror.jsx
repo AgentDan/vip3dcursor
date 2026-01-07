@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUsername, isAuthenticated, isAdmin } from '../../utils/jwt.utils';
+import { getUsername, isAuthenticated } from '../../utils/jwt.utils';
 import uploadService from '../../services/upload.service';
 import constructorService from '../../services/constructor.service';
 import { getFileUrl } from '../../utils/config';
 import Controller from './Controller';
-import { buildRuntime } from './buildRuntime';
+import { buildGltfHelper } from '../../utils/gltfHelper';
 
 const Constructor = () => {
   const navigate = useNavigate();
@@ -13,37 +13,33 @@ const Constructor = () => {
   const [userModelsNames, setUserModelsNames] = useState([]);
   const [userFiles, setUserFiles] = useState([]); // Сохраняем оригинальные файлы
   const [username, setUsername] = useState(null);
-  const [admin, setAdmin] = useState();
-  const [loading, setLoading] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
-  const [gltfInfo, setGltfInfo] = useState(null);
   const [currentPath, setCurrentPath] = useState(null);
   const [gltf, setGltf] = useState(null);
-  const [runtime, setRuntime] = useState(null);
+  const [gltfHelper, setGltfHelper] = useState(null);
   const [meshGroups, setMeshGroups] = useState({ defaultMeshes: [], groups: {} });
   const [selectedMeshes, setSelectedMeshes] = useState({}); // { "1": "Mesh_1_1", "2": "Mesh_2_1" }
   const [isMenuOpen, setIsMenuOpen] = useState(true); // Состояние открыто/закрыто меню
 
   const gltfRef = useRef(null);
-  
+
   const handleGltfLoad = useCallback((gltfData) => {
     if (!gltfData) return;
-    
+
     // Проверяем, изменился ли gltf (сравниваем по ссылке scene)
     if (gltfRef.current === gltfData.scene) {
       return; // Не обновляем, если это та же модель
     }
-    
+
     gltfRef.current = gltfData.scene;
     setGltf(gltfData);
-    // Строим runtime из gltf
-    const runtimeData = buildRuntime(gltfData);
-    setRuntime(runtimeData);
+    // Строим helper из gltf
+    const helperData = buildGltfHelper(gltfData);
+    setGltfHelper(helperData);
   }, []);
 
   useEffect(() => {
     setUsername(getUsername());
-    setAdmin(isAdmin());
   }, []);
 
   useEffect(() => {
@@ -61,7 +57,7 @@ const Constructor = () => {
     fetchModels();
   }, [authenticated]);
 
-  const handleProjectSelect = async (projectName) => {
+  const handleProjectSelect = useCallback((projectName) => {
     setCurrentProject(projectName);
 
     const selectedFile = userFiles.find(file => {
@@ -71,30 +67,23 @@ const Constructor = () => {
 
     if (!selectedFile) {
       setCurrentPath(null);
-      // Очищаем gltf и runtime при отсутствии файла
+      // Очищаем gltf и gltfHelper при отсутствии файла
       setGltf(null);
-      setRuntime(null);
+      setGltfHelper(null);
       return;
     }
 
     // Устанавливаем путь к выбранному GLTF файлу
     const filePath = getFileUrl(selectedFile.url);
     setCurrentPath(filePath);
-
-    try {
-      const gltfInfo = await uploadService.getGltfInfo(selectedFile.filename, username);
-      setGltfInfo(gltfInfo);
-    } catch (error) {
-      console.error('Ошибка при получении GLTF файла:', error);
-    }
-  };
+  }, [userFiles]);
 
   useEffect(() => {
-    // Очищаем gltf и runtime при сбросе currentPath
+    // Очищаем gltf и gltfHelper при сбросе currentPath
     if (!currentPath) {
       gltfRef.current = null;
       setGltf(null);
-      setRuntime(null);
+      setGltfHelper(null);
       setMeshGroups({ defaultMeshes: [], groups: {} });
       setSelectedMeshes({});
     }
@@ -103,7 +92,7 @@ const Constructor = () => {
   // Обработчик для получения информации о группах мешей
   const handleMeshesGrouped = useCallback(({ defaultMeshes, groups }) => {
     setMeshGroups({ defaultMeshes, groups });
-    
+
     // Устанавливаем первый объект в каждой группе как выбранный по умолчанию
     const initialSelected = {};
     Object.keys(groups).forEach(groupNum => {
@@ -116,25 +105,25 @@ const Constructor = () => {
   }, []);
 
   // Обработчик изменения выбранного меша в группе
-  const handleMeshSelect = (groupNum, meshName) => {
+  const handleMeshSelect = useCallback((groupNum, meshName) => {
     setSelectedMeshes(prev => ({
       ...prev,
       [groupNum]: meshName
     }));
-  };
+  }, []);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       {/* Canvas с 3D моделью на заднем плане */}
-      <Controller 
-        gltf={gltf} 
-        runtime={runtime} 
+      <Controller
+        gltf={gltf}
+        gltfHelper={gltfHelper}
         currentPath={currentPath}
         onGltfLoad={handleGltfLoad}
         selectedMeshes={selectedMeshes}
         onMeshesGrouped={handleMeshesGrouped}
       />
-      
+
       {/* Кнопки Home и Constructor - правый верхний угол */}
       <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col items-end gap-2">
         <button
@@ -166,11 +155,7 @@ const Constructor = () => {
           {/* Содержимое меню (показывается/скрывается) */}
           {isMenuOpen && (
             <div className="px-3 sm:px-4 pt-3 pb-3 sm:pb-4 space-y-3">
-              {loading && (
-                <p className="text-xs sm:text-sm text-gray-700 font-light">Загрузка файлов...</p>
-              )}
-
-              {!loading && userModelsNames.length > 0 && (
+              {userModelsNames.length > 0 && (
                 <select
                   value={currentProject || ""}
                   onChange={(e) => {
@@ -180,9 +165,9 @@ const Constructor = () => {
                     } else {
                       setCurrentProject(null);
                       setCurrentPath(null);
-                      // Очищаем gltf и runtime при сбросе выбора
+                      // Очищаем gltf и gltfHelper при сбросе выбора
                       setGltf(null);
-                      setRuntime(null);
+                      setGltfHelper(null);
                     }
                   }}
                   className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg border border-white/20 outline-none transition-all focus:border-white/40 focus:bg-white/20 hover:bg-white/15 font-light text-xs sm:text-sm cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000000%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E')] bg-[length:1em] bg-[right_0.5rem_center] bg-no-repeat pr-8"
@@ -198,7 +183,7 @@ const Constructor = () => {
                 </select>
               )}
 
-              {!loading && userModelsNames.length === 0 && (
+              {userModelsNames.length === 0 && (
                 <p className="text-xs sm:text-sm text-gray-700 font-light">Файлы не найдены</p>
               )}
 

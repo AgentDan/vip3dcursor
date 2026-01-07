@@ -9,7 +9,26 @@ const Home = () => {
     return (
         <div className="relative w-screen h-screen">
             <HeaderMain/>
-            <Canvas style={{background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0)'}} shadows camera={{position: [0, 0, 0], fov: 50, far: 50000}}>
+            <Canvas 
+              style={{background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0)'}} 
+              shadows 
+              camera={{position: [0, 0, 0], fov: 50, far: 50000}}
+              gl={{ 
+                preserveDrawingBuffer: true,
+                powerPreference: "high-performance"
+              }}
+              onCreated={({ gl }) => {
+                // Обработка потери контекста
+                const canvas = gl.domElement;
+                canvas.addEventListener('webglcontextlost', (event) => {
+                  event.preventDefault();
+                  console.warn('WebGL context lost, attempting to restore...');
+                });
+                canvas.addEventListener('webglcontextrestored', () => {
+                  console.log('WebGL context restored');
+                });
+              }}
+            >
                 <ScrollControls pages={10} damping={0.2}>
                     <Overlay/>
                     <Bubble/>

@@ -1,6 +1,14 @@
-// Функция для построения runtime из gltf (результат useGLTF)
-// useGLTF возвращает { nodes, materials, scenes, scene }
-export const buildRuntime = (gltfData) => {
+/**
+ * Утилиты для работы с GLTF данными
+ * Преобразует данные GLTF в удобный формат для работы с мешами и материалами
+ */
+
+/**
+ * Создает helper объект из GLTF данных для быстрого доступа к мешам и материалам
+ * @param {Object} gltfData - Данные GLTF из useGLTF
+ * @returns {{meshesMap: Object, materialsMap: Object, scenes: Array}} Helper объект
+ */
+export function buildGltfHelper(gltfData) {
   if (!gltfData) {
     return {
       meshesMap: {},
@@ -36,5 +44,5 @@ export const buildRuntime = (gltfData) => {
     materialsMap,
     scenes
   };
-};
+}
 
