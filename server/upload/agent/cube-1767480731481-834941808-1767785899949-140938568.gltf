@@ -101,46 +101,91 @@
         },
         "env": [
           {
+            "type": "light",
+            "name": "DefaultLight",
+            "intensity": 1,
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "position": [
+              0,
+              5,
+              5
+            ]
+          },
+          {
             "type": "environment",
             "file": "/img/HDRI_sea.hdr",
-            "intensity": 0.1,
+            "intensity": 0.5,
             "background": true
           },
           {
             "type": "spotlight",
             "name": "SpotLightOne",
             "position": [
-              -1.196,
-              1.98,
+              14.804,
+              3.98,
               0.8849999999999998
             ],
             "target": [
-              -0.471,
-              0.444,
-              -0.835
+              5.529,
+              1.444,
+              1.165
             ],
-            "intensity": 19,
+            "intensity": 0.3,
             "onoff": true,
             "visible": true,
-            "color": "white"
+            "color": "red"
           },
           {
-            "type": "spotlight",
-            "name": "SpotLightTwo",
+            "type": "fog",
+            "enabled": true,
+            "fogType": "linear",
+            "color": [
+              200,
+              200,
+              200
+            ],
+            "near": 1,
+            "far": 100,
+            "density": 0.00025
+          },
+          {
+            "type": "shadow",
+            "enabled": true,
+            "shadowType": "PCFSoft",
+            "autoUpdate": true,
+            "mapSize": [
+              2048,
+              2048
+            ],
+            "bias": -0.0001,
+            "normalBias": 0.02,
+            "radius": 4,
+            "darkness": 0.5
+          },
+          {
+            "type": "description",
+            "name": "default_1",
+            "descriptionName": "default_1",
+            "desc": "AllahuAkbar!!!",
             "position": [
-              7.804,
-              5.98,
-              0.8849999999999998
+              1.02,
+              0.255,
+              -1.3469999999999998
             ],
-            "target": [
-              -0.471,
-              0.444,
-              -0.835
-            ],
-            "intensity": 20,
-            "onoff": true,
-            "visible": true,
-            "color": "white"
+            "clickDescription": false
+          },
+          {
+            "type": "orbitcontrols",
+            "name": "orbitcontrols",
+            "minAzimuthAngle": -1.49,
+            "maxAzimuthAngle": 1.6865999999999999,
+            "minPolarAngle": 3.57681469282041,
+            "maxPolarAngle": 4.06681469282041,
+            "orbitFree": false
           }
         ]
       },

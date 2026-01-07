@@ -49,6 +49,27 @@
     "normalBias": 0.02,
     "radius": 4.0,
     "darkness": 0.5
+  },
+  {
+    "type": "description",
+    "name": "default_1",
+    "descriptionName": "default_1",
+    "desc": "AllahuAkbar!!!",
+    "position": [
+      1.02,
+      0.255,
+      -1.3469999999999998
+    ],
+    "clickDescription": false
+  },
+  {
+    "type": "orbitcontrols",
+    "name": "orbitcontrols",
+    "minAzimuthAngle": -1.49,
+    "maxAzimuthAngle": 1.6865999999999999,
+    "minPolarAngle": 0.785,
+    "maxPolarAngle": 1.885,
+    "orbitFree": true
   }
 ]
 

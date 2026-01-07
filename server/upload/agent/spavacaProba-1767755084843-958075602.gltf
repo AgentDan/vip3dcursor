@@ -26,7 +26,7 @@
           {
             "type": "environment",
             "file": "/img/HDRI_sea.hdr",
-            "intensity": 0.05,
+            "intensity": 0.09,
             "background": true
           },
           {
@@ -95,6 +95,65 @@
             "near": 1,
             "far": 4,
             "density": 1
+          },
+          {
+            "type": "description",
+            "name": "default_1",
+            "descriptionName": "default_1",
+            "desc": "4444444444444",
+            "position": [
+              0.42,
+              0.255,
+              -1.3469999999999998
+            ],
+            "clickDescription": false
+          },
+          {
+            "type": "description",
+            "name": "default_2",
+            "descriptionName": "default_2",
+            "desc": "2222222222222222222222222222222222",
+            "position": [
+              1.43,
+              -0.09,
+              -0.79
+            ],
+            "clickDescription": false
+          },
+          {
+            "type": "description",
+            "name": "default_3",
+            "descriptionName": "default_3",
+            "desc": "Default THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\n",
+            "position": [
+              -1.6940000000000002,
+              0.13000000000000017,
+              -1.4140000000000001
+            ],
+            "clickDescription": false
+          },
+          {
+            "type": "orbitcontrols",
+            "name": "orbitcontrols",
+            "minAzimuthAngle": -1.49,
+            "maxAzimuthAngle": -4.80318530717959,
+            "minPolarAngle": -0.233185307179586,
+            "maxPolarAngle": 2.05681469282041,
+            "orbitFree": false
+          },
+          {
+            "type": "camera",
+            "position": [
+              0,
+              0.05,
+              0.2
+            ],
+            "target": [
+              0,
+              0,
+              0
+            ],
+            "fov": 50
           }
         ],
         "jewelcraft": {

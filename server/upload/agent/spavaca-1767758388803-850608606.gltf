@@ -30,7 +30,7 @@
             "maxAzimuthAngle": -112,
             "minPolarAngle": 0.785,
             "maxPolarAngle": 1.885,
-            "orbitFree": true
+            "orbitFree": false
           },
           {
             "type": "spotlight",

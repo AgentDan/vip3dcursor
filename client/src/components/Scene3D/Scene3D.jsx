@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { GltfLoader } from './GltfLoader';
@@ -7,6 +7,9 @@ import { MeshVisibilityController } from './MeshVisibilityController';
 import { GltfScene } from './GltfScene';
 import { EnvParamsController } from '../EnvEditor/EnvParamsController';
 import { SpotLightVisualizer } from './SpotLightVisualizer';
+import { DescriptionVisualizer } from './DescriptionVisualizer';
+import { OrbitControlsController } from './OrbitControlsController';
+import { CameraParamsController } from './CameraParamsController';
 
 /**
  * Основной компонент 3D сцены
@@ -47,6 +50,57 @@ export function Scene3D({
       // Если есть параметры background, EnvParamsController установит свой фон
     }
   }, [showEmptyCanvas, envParams]);
+
+  // Вычисляем параметры для OrbitControls из envParams
+  const orbitControlsProps = useMemo(() => {
+    const orbitParams = envParams && envParams.length > 0 
+      ? envParams.find(p => p.type === 'orbitcontrols')
+      : null;
+    
+    const isOrbitFree = orbitParams?.orbitFree !== false;
+    
+    const props = {
+      enablePan: true,
+      enableZoom: isOrbitFree, // Зум включен только если orbitFree = true
+      enableRotate: true,
+      minDistance: 0.1,
+      maxDistance: 100
+    };
+    
+    if (orbitParams && !isOrbitFree) {
+      // Если orbitFree = false, применяем ограничения и отключаем зум
+      props.enableZoom = false;
+      if (orbitParams.minAzimuthAngle !== undefined) {
+        props.minAzimuthAngle = Number(orbitParams.minAzimuthAngle);
+      }
+      if (orbitParams.maxAzimuthAngle !== undefined) {
+        props.maxAzimuthAngle = Number(orbitParams.maxAzimuthAngle);
+      }
+      if (orbitParams.minPolarAngle !== undefined) {
+        props.minPolarAngle = Number(orbitParams.minPolarAngle);
+      }
+      if (orbitParams.maxPolarAngle !== undefined) {
+        props.maxPolarAngle = Number(orbitParams.maxPolarAngle);
+      }
+    } else {
+      // Если orbitFree = true или параметров нет, без ограничений
+      props.enableZoom = true;
+      props.minAzimuthAngle = -Infinity;
+      props.maxAzimuthAngle = Infinity;
+      props.minPolarAngle = 0;
+      props.maxPolarAngle = Math.PI;
+    }
+    
+    return props;
+  }, [envParams]);
+  
+  // Ключ для принудительного обновления OrbitControls при изменении параметров
+  const orbitControlsKey = useMemo(() => {
+    const orbitParams = envParams && envParams.length > 0 
+      ? envParams.find(p => p.type === 'orbitcontrols')
+      : null;
+    return orbitParams ? JSON.stringify(orbitParams) : 'default';
+  }, [envParams]);
 
   return (
     <div className="fixed inset-0 w-screen h-screen">
@@ -125,7 +179,7 @@ export function Scene3D({
           {/* Рендерим модель только если она загружена */}
           {!showEmptyCanvas && (
             <>
-              <CameraController gltf={gltf} />
+              <CameraController gltf={gltf} envParams={envParams} />
               <MeshVisibilityController
                 gltf={gltf}
                 selectedMeshes={selectedMeshes || {}}
@@ -139,17 +193,16 @@ export function Scene3D({
                     key={JSON.stringify(envParams.filter(p => p.type === 'spotlight'))} 
                     envParams={envParams} 
                   />
+                  <DescriptionVisualizer envParams={envParams} />
+                  <CameraParamsController envParams={envParams} />
                 </>
               )}
             </>
           )}
 
           <OrbitControls
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
-            minDistance={0.1}
-            maxDistance={100}
+            key={orbitControlsKey}
+            {...orbitControlsProps}
           />
           {/* Environment будет применяться через EnvParamsController, если есть HDRI в env параметрах */}
           {(!envParams || envParams.length === 0 || !envParams.some(p => p.type === 'environment' && p.file)) && (

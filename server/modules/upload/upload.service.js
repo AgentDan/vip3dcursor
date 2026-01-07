@@ -479,6 +479,22 @@ const updateGltfEnv = async (filePath, envParams) => {
         }
       }
       
+      // Для camera параметров сохраняем все свойства
+      if (sanitized.type === 'camera') {
+        // Сохраняем position как массив чисел
+        if (sanitized.position && Array.isArray(sanitized.position)) {
+          sanitized.position = sanitized.position.map(v => Number(v));
+        }
+        // Сохраняем target как массив чисел
+        if (sanitized.target && Array.isArray(sanitized.target)) {
+          sanitized.target = sanitized.target.map(v => Number(v));
+        }
+        // Сохраняем fov как число
+        if (sanitized.fov !== undefined && sanitized.fov !== null) {
+          sanitized.fov = Number(sanitized.fov);
+        }
+      }
+      
       return sanitized;
     });
     

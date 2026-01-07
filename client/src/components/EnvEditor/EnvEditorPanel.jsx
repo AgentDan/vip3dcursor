@@ -92,6 +92,25 @@ export function EnvEditorPanel({ envParams, onUpdate, onClose, isCollapsed: exte
     setLocalParams(prev => {
       const updated = [...prev];
       if (updated[originalIndex]) {
+        const paramToDelete = updated[originalIndex];
+        const paramType = paramToDelete?.type;
+        
+        // Проверяем, требуется ли подтверждение для удаления
+        const requiresConfirmation = paramType === 'spotlight' || 
+                                     paramType === 'fog' || 
+                                     paramType === 'description';
+        
+        if (requiresConfirmation) {
+          const paramName = paramToDelete?.name || paramType || 'элемент';
+          const confirmed = window.confirm(
+            `Вы уверены, что хотите удалить ${paramType} "${paramName}"?`
+          );
+          
+          if (!confirmed) {
+            return prev; // Отменяем удаление, если пользователь не подтвердил
+          }
+        }
+        
         // Удаляем элемент
         updated.splice(originalIndex, 1);
         // Обновляем индексы для всех элементов
@@ -380,11 +399,17 @@ function ParamField({ label, value, paramType, onChange }) {
     // Определяем шаг и ограничения на основе имени поля и типа параметра
     const isPositionOrTarget = label.toLowerCase().match(/position|target/i);
     const isSpotlight = paramType === 'spotlight';
+    const isCamera = paramType === 'camera';
     const step = isPositionOrTarget ? 0.01 : 1;
     // Для spotlight: position и target от -5 до 5
+    // Для camera: position и target от -1000 до 1000
     // Для других: без ограничений или стандартные
-    const min = (isPositionOrTarget && isSpotlight) ? -5 : (isPositionOrTarget ? -1000 : undefined);
-    const max = (isPositionOrTarget && isSpotlight) ? 5 : (isPositionOrTarget ? 1000 : undefined);
+    const min = (isPositionOrTarget && isSpotlight) ? -5 : 
+                (isPositionOrTarget && isCamera) ? -1000 : 
+                (isPositionOrTarget ? -1000 : undefined);
+    const max = (isPositionOrTarget && isSpotlight) ? 5 : 
+               (isPositionOrTarget && isCamera) ? 1000 : 
+               (isPositionOrTarget ? 1000 : undefined);
     
     return (
       <div className="mb-2 last:mb-0">
@@ -464,6 +489,23 @@ function ParamField({ label, value, paramType, onChange }) {
 function getNumberConfig(key, currentValue, paramType) {
   const lowerKey = key.toLowerCase();
   const isSpotlight = paramType === 'spotlight';
+  const isOrbitControls = paramType === 'orbitcontrols';
+  const isCamera = paramType === 'camera';
+  
+  // Для orbitcontrols: углы в радианах
+  if (isOrbitControls && lowerKey.match(/azimuth|polar|angle/i)) {
+    return { min: -Math.PI * 2, max: Math.PI * 2, step: 0.01 };
+  }
+  
+  // Для camera: FOV (может быть отрицательным)
+  if (isCamera && lowerKey.match(/fov/i)) {
+    return { min: -180, max: 180, step: 0.1 };
+  }
+  
+  // Для camera: position и target
+  if (isCamera && lowerKey.match(/position|target/i)) {
+    return { min: -1000, max: 1000, step: 0.01 };
+  }
   
   if (lowerKey.match(/color|rgb|red|green|blue|alpha/i)) {
     return { min: 0, max: 255, step: 1 };

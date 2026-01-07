@@ -5,13 +5,23 @@ import * as THREE from 'three';
 /**
  * Компонент для автоматического центрирования камеры на модели
  * Оптимизирован: центрирует камеру только один раз при загрузке новой модели
+ * Применяется только если нет параметров camera в envParams
  */
-export function CameraController({ gltf }) {
+export function CameraController({ gltf, envParams }) {
   const { camera } = useThree();
   const gltfSceneRef = useRef(null);
 
   useEffect(() => {
     if (!gltf || !gltf.scene) return;
+
+    // Проверяем, есть ли параметры camera в envParams
+    // Если есть - не применяем автоматическое центрирование
+    const hasCameraParams = envParams && Array.isArray(envParams) && 
+      envParams.some(p => p.type === 'camera');
+    
+    if (hasCameraParams) {
+      return; // Параметры camera будут применены через CameraParamsController
+    }
 
     // Проверяем, изменилась ли сцена (новая модель загружена)
     if (gltfSceneRef.current === gltf.scene) {
@@ -31,7 +41,7 @@ export function CameraController({ gltf }) {
     camera.position.set(center.x, center.y, center.z + distance);
     camera.lookAt(center);
     camera.updateProjectionMatrix();
-  }, [gltf, camera]);
+  }, [gltf, camera, envParams]);
 
   return null;
 }

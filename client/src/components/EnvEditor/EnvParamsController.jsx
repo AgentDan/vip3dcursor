@@ -45,6 +45,18 @@ export function EnvParamsController({ gltf, envParams }) {
         return;
       }
 
+      // Для camera - обрабатывается через CameraParamsController
+      if (param.type === 'camera') {
+        // Camera обрабатывается отдельно в CameraParamsController
+        return;
+      }
+
+      // Для orbitcontrols - обрабатывается через OrbitControlsController
+      if (param.type === 'orbitcontrols') {
+        // OrbitControls обрабатывается отдельно в OrbitControlsController
+        return;
+      }
+
       // Для fog - применяем туман к сцене
       if (param.type === 'fog') {
         applyFog(scene, param);
