@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
-import { Suspense } from 'react';
 import * as THREE from 'three';
 
 /**
@@ -16,12 +15,12 @@ export function EnvParamsController({ gltf, envParams }) {
 
   useEffect(() => {
     if (!gltf?.scene || !envParams || envParams.length === 0) {
-      // Если параметров нет, сбрасываем background и HDRI
+      // Если параметров нет, устанавливаем светлый фон по умолчанию
       if (gl?.domElement) {
         const canvas = gl.domElement;
-        canvas.style.background = '';
-        canvas.style.backgroundColor = '';
-        canvas.style.setProperty('background-color', '', 'important');
+        canvas.style.background = '#f3f4f6'; // gray-100 в Tailwind - очень светлый
+        canvas.style.backgroundColor = '#f3f4f6';
+        canvas.style.setProperty('background-color', '#f3f4f6', 'important');
       }
       setHdriConfig(null);
       return;

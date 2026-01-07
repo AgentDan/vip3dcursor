@@ -22,10 +22,9 @@ const Home = () => {
                 const canvas = gl.domElement;
                 canvas.addEventListener('webglcontextlost', (event) => {
                   event.preventDefault();
-                  console.warn('WebGL context lost, attempting to restore...');
                 });
                 canvas.addEventListener('webglcontextrestored', () => {
-                  console.log('WebGL context restored');
+                  // WebGL context restored
                 });
               }}
             >

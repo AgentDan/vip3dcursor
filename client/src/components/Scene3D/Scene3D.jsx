@@ -24,11 +24,28 @@ export function Scene3D({
   const showEmptyCanvas = !gltf || !gltf.scene;
   const [contextLost, setContextLost] = useState(false);
   const [canvasKey, setCanvasKey] = useState(0);
+  const glRef = useRef(null);
 
   useEffect(() => {
     // Сбрасываем флаг потери контекста при изменении пути
     setContextLost(false);
   }, [currentPath]);
+
+  // Устанавливаем светло-серый фон по умолчанию, если нет env параметров для фона
+  useEffect(() => {
+    if (glRef.current?.domElement) {
+      const canvas = glRef.current.domElement;
+      // Проверяем, есть ли параметры background в envParams
+      const hasBackgroundParam = envParams && envParams.some(p => p.type === 'background');
+      
+      if (!hasBackgroundParam) {
+        // Если нет параметров background, устанавливаем светлый фон по умолчанию
+        canvas.style.background = '#f3f4f6'; // gray-100 в Tailwind - очень светлый
+        canvas.style.backgroundColor = '#f3f4f6';
+      }
+      // Если есть параметры background, EnvParamsController установит свой фон
+    }
+  }, [showEmptyCanvas, envParams]);
 
   return (
     <div className="fixed inset-0 w-screen h-screen">
@@ -63,8 +80,15 @@ export function Scene3D({
             failIfMajorPerformanceCaveat: false
           }}
           onCreated={({ gl }) => {
+            // Сохраняем ссылку на gl для управления фоном
+            glRef.current = gl;
+            
             // Обработка потери контекста WebGL
             const canvas = gl.domElement;
+            
+            // Устанавливаем светлый фон по умолчанию
+            canvas.style.background = '#f3f4f6'; // gray-100 в Tailwind - очень светлый
+            canvas.style.backgroundColor = '#f3f4f6';
             
             const contextLostHandler = (event) => {
               event.preventDefault();
@@ -86,7 +110,7 @@ export function Scene3D({
               canvas.removeEventListener('webglcontextrestored', contextRestoredHandler);
             };
           }}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: '100%', background: '#f3f4f6' }}
         >
           <ambientLight intensity={0.5} />
           <directionalLight position={[10, 10, 5]} intensity={1} />

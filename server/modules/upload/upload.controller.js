@@ -137,6 +137,16 @@ const getGltfInfo = async (req, res) => {
   }
 };
 
+const getDefaultEnvParams = async (req, res) => {
+  try {
+    const defaultParams = await uploadService.getDefaultEnvParams();
+    res.status(200).json({ env: defaultParams });
+  } catch (error) {
+    console.error('Get default env params error:', error);
+    res.status(500).json({ error: error.message || 'Failed to get default env params' });
+  }
+};
+
 const updateGltfEnv = async (req, res) => {
   try {
     // Проверяем права администратора
@@ -171,6 +181,7 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  updateGltfEnv
+  updateGltfEnv,
+  getDefaultEnvParams
 };
 

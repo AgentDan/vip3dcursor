@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useMemo } from 'react';
+import { useLayoutEffect, useRef, useMemo } from 'react';
 import {useFrame, useThree} from "@react-three/fiber";
 import gsap from "gsap";
 import {useGLTF, useScroll, PerspectiveCamera} from "@react-three/drei";

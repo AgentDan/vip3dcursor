@@ -26,6 +26,7 @@ function Admin() {
     selectedUser: '',
     file: null
   });
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -135,6 +136,12 @@ function Admin() {
       const result = await uploadService.uploadFileToUser(uploadData.file, uploadData.selectedUser);
       setUploadSuccess(true);
       setUploadData({ selectedUser: '', file: null });
+      
+      // Автоматически обновляем список файлов после успешной загрузки
+      if (activeTab === 'files') {
+        await fetchAllFiles();
+      }
+      
       setTimeout(() => {
         setShowUploadForm(false);
         setUploadSuccess(false);
@@ -150,6 +157,39 @@ function Admin() {
     const file = e.target.files[0];
     if (file) {
       setUploadData({ ...uploadData, file });
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      // Проверяем тип файла
+      const validTypes = ['.gltf', '.glb', '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip'];
+      const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+      
+      if (validTypes.includes(fileExtension)) {
+        setUploadData({ ...uploadData, file });
+        setError('');
+      } else {
+        setError(`Invalid file type. Allowed types: ${validTypes.join(', ')}`);
+      }
     }
   };
 
@@ -553,7 +593,16 @@ function Admin() {
                           <label className="block text-xs font-light text-gray-600 mb-2 uppercase tracking-wider">
                             Select File
                           </label>
-                          <label className="flex flex-col items-center justify-center w-full h-32 border border-gray-300/50 border-dashed rounded-lg cursor-pointer bg-white/40 backdrop-blur-sm hover:bg-white/60 transition-colors">
+                          <label 
+                            className={`flex flex-col items-center justify-center w-full h-32 border border-dashed rounded-lg cursor-pointer backdrop-blur-sm transition-all ${
+                              isDragging 
+                                ? 'border-blue-500 bg-blue-50/60 border-2' 
+                                : 'border-gray-300/50 bg-white/40 hover:bg-white/60'
+                            }`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                          >
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                               <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />

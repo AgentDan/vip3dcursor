@@ -9,118 +9,40 @@
       "extras": {
         "env": [
           {
-            "type": "background",
-            "name": "Background",
-            "file": "/img/skyTwo.exr",
-            "intensity": 0.16
-          },
-          {
-            "type": "camera",
+            "type": "light",
+            "name": "DefaultLight",
+            "intensity": 1.6,
+            "color": [
+              255,
+              255,
+              255
+            ],
             "position": [
               0,
+              5,
+              5
+            ]
+          },
+          {
+            "type": "light",
+            "name": "DefaultLight",
+            "intensity": 1.6,
+            "color": [
+              255,
+              255,
+              255
+            ],
+            "position": [
               0,
-              0.1
-            ],
-            "fov": 50
+              5,
+              5
+            ]
           },
           {
-            "type": "orbitcontrols",
-            "name": "orbitcontrols",
-            "minAzimuthAngle": -1.49,
-            "maxAzimuthAngle": 1.6865999999999999,
-            "minPolarAngle": 0.785,
-            "maxPolarAngle": 1.885,
-            "orbitFree": true
-          },
-          {
-            "type": "spotlight",
-            "name": "SpotLightOne",
-            "position": [
-              0.8040000000000002,
-              0.9800000000000001,
-              0.8849999999999998
-            ],
-            "target": [
-              1.5290000000000001,
-              1.444,
-              1.165
-            ],
-            "intensity": 20,
-            "onoff": true,
-            "visible": true,
-            "color": "red"
-          },
-          {
-            "type": "spotlight",
-            "name": "SpotLightTwo",
-            "position": [
-              0.24600000000000016,
-              -0.09299999999999986,
-              -0.5400000000000003
-            ],
-            "target": [
-              -0.2,
-              -0.1,
-              -1.1
-            ],
-            "intensity": 3.419999999999999,
-            "onoff": true,
-            "visible": true,
-            "color": "green"
-          },
-          {
-            "type": "spotlight",
-            "name": "SpotLightThree",
-            "position": [
-              -0.20799999999999996,
-              -0.04799999999999999,
-              -2.4510000000000005
-            ],
-            "target": [
-              0.2,
-              0.1,
-              -1.2
-            ],
-            "intensity": 2.5699999999999994,
-            "onoff": true,
-            "visible": true,
-            "color": "black"
-          },
-          {
-            "type": "description",
-            "name": "default_1",
-            "descriptionName": "default_1",
-            "desc": "AllahuAkbar!!!",
-            "position": [
-              1.02,
-              0.255,
-              -1.3469999999999998
-            ],
-            "clickDescription": false
-          },
-          {
-            "type": "description",
-            "name": "default_2",
-            "descriptionName": "default_2",
-            "desc": "Hello TWO!!!!\nlaksjldf lask slkdfj sl f\nsdf slkjsld ls glskjgl ls dlgsjdlgjsldgjls ls dl gsldjg sldjg lsd glsdgjlg l lskd lksdjglsdg sdlgk slkj ldgks ldkjglskdlgsldkghsldhkgslhgsldgsdg",
-            "position": [
-              0.06399999999999988,
-              -0.19499999999999984,
-              -0.895
-            ],
-            "clickDescription": false
-          },
-          {
-            "type": "description",
-            "name": "default_3",
-            "descriptionName": "default_3",
-            "desc": "Default THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\nDefault THREE!!!!\n",
-            "position": [
-              -1.6940000000000002,
-              0.13000000000000017,
-              -1.4140000000000001
-            ],
-            "clickDescription": false
+            "type": "environment",
+            "file": "/img/HDRI_sea.hdr",
+            "intensity": 0.6,
+            "background": true
           }
         ],
         "jewelcraft": {

@@ -196,6 +196,26 @@ const getGltfInfo = async (filename, username) => {
   return await response.json();
 };
 
+const getDefaultEnvParams = async () => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_URL}/gltf/env/defaults`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get default env params');
+  }
+
+  const data = await response.json();
+  return data.env;
+};
+
 const updateGltfEnv = async (filePath, envParams) => {
   const token = localStorage.getItem('token');
   
@@ -235,6 +255,7 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  updateGltfEnv
+  updateGltfEnv,
+  getDefaultEnvParams
 };
 

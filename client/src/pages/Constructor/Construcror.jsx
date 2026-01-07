@@ -21,9 +21,9 @@ const Constructor = () => {
   const [gltfHelper, setGltfHelper] = useState(null);
   const [meshGroups, setMeshGroups] = useState({ defaultMeshes: [], groups: {} });
   const [selectedMeshes, setSelectedMeshes] = useState({}); // { "1": "Mesh_1_1", "2": "Mesh_2_1" }
-  const [isMenuOpen, setIsMenuOpen] = useState(true); // Состояние открыто/закрыто меню
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // Состояние открыто/закрыто меню
   const [envParams, setEnvParams] = useState([]); // Env параметры из GLTF
-  const [showEnvEditor, setShowEnvEditor] = useState(false); // Показать/скрыть редактор env
+  const [isEnvPanelCollapsed, setIsEnvPanelCollapsed] = useState(true); // Состояние свернута/развернута панель Env Parameters
 
   const gltfRef = useRef(null);
   const currentPathRef = useRef(null);
@@ -138,6 +138,28 @@ const Constructor = () => {
       setEnvParams([]);
     }
   }, [currentPath]);
+  
+  // Автоматически выбираем первую модель при загрузке файлов
+  useEffect(() => {
+    if (userModelsNames.length > 0 && !currentProject && userFiles.length > 0) {
+      const firstModel = userModelsNames[0];
+      if (firstModel) {
+        // Находим файл для первой модели
+        const selectedFile = userFiles.find(file => {
+          const fileLatinName = file.filename.replace(/[^a-zA-Z]/g, '');
+          return fileLatinName === firstModel;
+        });
+
+        if (selectedFile) {
+          // Устанавливаем проект и путь напрямую, без использования handleProjectSelect
+          setCurrentProject(firstModel);
+          const filePath = getFileUrl(selectedFile.url);
+          setCurrentPath(filePath);
+          currentPathRef.current = filePath;
+        }
+      }
+    }
+  }, [userModelsNames, userFiles, currentProject]);
 
   // Cleanup для timeout при размонтировании
   useEffect(() => {
@@ -297,36 +319,46 @@ const Constructor = () => {
         envParams={envParams}
       />
 
-      {/* Кнопки Home и Constructor - правый верхний угол */}
-      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col items-end gap-2">
-        <button
-          onClick={() => navigate('/home')}
-          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex-shrink-0 whitespace-nowrap shadow-lg"
-          title="Go to home page"
-        >
-          Home
-        </button>
-
-        {/* Выпадающий список с кнопкой Constructor */}
-        <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-lg overflow-hidden min-w-[200px] sm:min-w-[250px]">
-          {/* Кнопка заголовка "Constructor" */}
+      {/* Иконка Env Parameters - левая сторона */}
+      {gltf && userIsAdmin && isEnvPanelCollapsed && (
+        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-50">
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex items-center justify-between"
+            onClick={() => setIsEnvPanelCollapsed(false)}
+            className="p-2 bg-white/10 backdrop-blur-md hover:bg-white/20 rounded-lg border border-white/20 cursor-pointer shadow-lg transition-all"
+            title="Env Parameters"
           >
-            <span>Constructor</span>
             <svg
-              className={`w-4 h-4 text-black transition-transform duration-200 flex-shrink-0 ${isMenuOpen ? 'rotate-180' : ''}`}
+              className="w-5 h-5 text-black"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
             </svg>
           </button>
+        </div>
+      )}
 
-          {/* Содержимое меню (показывается/скрывается) */}
-          {isMenuOpen && (
+      {/* Панель Constructor - абсолютно позиционирована */}
+      {isMenuOpen && (
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-lg overflow-hidden min-w-[200px] sm:min-w-[250px]">
+            {/* Кнопка заголовка "Constructor" */}
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex items-center justify-between"
+            >
+              <span>Constructor</span>
+              <svg
+                className="w-4 h-4 text-black transition-transform duration-200 flex-shrink-0 rotate-180"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Содержимое меню */}
             <div className="px-3 sm:px-4 pt-3 pb-3 sm:pb-4 space-y-3">
               {userModelsNames.length > 0 && (
                 <select
@@ -387,8 +419,44 @@ const Constructor = () => {
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+      )}
+
+      {/* Иконки Constructor и Home - правый верхний угол, всегда на месте */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-row items-center gap-2">
+        {/* Иконка Constructor */}
+        {!isMenuOpen && (
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="p-2 bg-white/10 backdrop-blur-md hover:bg-white/20 rounded-lg border border-white/20 cursor-pointer shadow-lg transition-all"
+            title="Constructor"
+          >
+            <svg
+              className="w-5 h-5 text-black"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </button>
+        )}
+
+        {/* Кнопка Home - крайняя справа, всегда на месте */}
+        <button
+          onClick={() => navigate('/home')}
+          className="p-2 bg-white/10 backdrop-blur-md hover:bg-white/20 rounded-lg border border-white/20 cursor-pointer shadow-lg transition-all flex-shrink-0"
+          title="Go to home page"
+        >
+          <svg
+            className="w-5 h-5 text-black"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </button>
       </div>
 
       {/* Кнопка для открытия редактора env параметров - всегда для администраторов */}
@@ -399,22 +467,17 @@ const Constructor = () => {
               Saving...
             </div>
           )}
-          <button
-            onClick={() => setShowEnvEditor(!showEnvEditor)}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md text-black rounded-lg hover:bg-white/20 transition-all font-light text-xs sm:text-sm uppercase tracking-wider border border-white/20 cursor-pointer flex-shrink-0 whitespace-nowrap shadow-lg"
-            title="Toggle Env Parameters Editor"
-          >
-            Env Editor {envParams && envParams.length > 0 ? `(${envParams.length})` : ''}
-          </button>
         </div>
       )}
 
-      {/* Панель редактора env параметров */}
-      {showEnvEditor && (
+      {/* Панель редактора env параметров - автоматически показывается для администраторов */}
+      {gltf && userIsAdmin && !isEnvPanelCollapsed && (
         <EnvEditorPanel
           envParams={envParams || []}
           onUpdate={handleEnvParamsUpdate}
-          onClose={() => setShowEnvEditor(false)}
+          onClose={() => setIsEnvPanelCollapsed(true)}
+          isCollapsed={isEnvPanelCollapsed}
+          onCollapseChange={setIsEnvPanelCollapsed}
         />
       )}
     </div>

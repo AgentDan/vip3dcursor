@@ -1,4 +1,4 @@
-import React, {Suspense} from 'react';
+import {Suspense} from 'react';
 import {Environment, Html, useProgress, useGLTF} from "@react-three/drei";
 import Two from "./Two.jsx";
 

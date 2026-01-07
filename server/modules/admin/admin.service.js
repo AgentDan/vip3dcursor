@@ -43,8 +43,7 @@ const createUser = async (username, password, isAdmin = false) => {
     try {
       const userUploadDir = path.join(uploadBaseDir, normalizedUsername);
       await fs.mkdir(userUploadDir, { recursive: true });
-      console.log(`Created upload directory for user: ${normalizedUsername}`);
-    } catch (dirError) {
+      } catch (dirError) {
       console.error(`Error creating upload directory for user ${normalizedUsername}:`, dirError);
       // Не прерываем создание пользователя, если папка не создалась
     }
@@ -85,7 +84,6 @@ const deleteUser = async (userId) => {
     
     if (dirExists) {
       await fs.rm(userUploadDir, { recursive: true, force: true });
-      console.log(`Deleted upload directory for user: ${username}`);
     }
   } catch (dirError) {
     console.error(`Error deleting upload directory for user ${username}:`, dirError);

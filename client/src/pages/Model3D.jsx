@@ -108,7 +108,7 @@ function Model3D() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
+    <div className="fixed inset-0 bg-gray-100">
       {/* Leva Panel - только для администраторов */}
       {userIsAdmin && <Leva collapsed={false} />}
       
@@ -222,20 +222,33 @@ function Model3D() {
                 gl={{ 
                   antialias: true,
                   preserveDrawingBuffer: true,
-                  powerPreference: "high-performance"
+                  powerPreference: "high-performance",
+                  alpha: false
                 }}
                 onCreated={({ gl }) => {
-                  // Обработка потери контекста
+                  // Устанавливаем светлый фон по умолчанию с принудительным применением
                   const canvas = gl.domElement;
+                  const lightGray = '#f3f4f6'; // gray-100 в Tailwind - очень светлый
+                  
+                  // Устанавливаем фон через несколько способов для гарантии
+                  canvas.style.background = lightGray;
+                  canvas.style.backgroundColor = lightGray;
+                  canvas.style.setProperty('background-color', lightGray, 'important');
+                  canvas.style.setProperty('background', lightGray, 'important');
+                  
+                  // Обработка потери контекста
                   canvas.addEventListener('webglcontextlost', (event) => {
                     event.preventDefault();
-                    console.warn('WebGL context lost, attempting to restore...');
                   });
                   canvas.addEventListener('webglcontextrestored', () => {
-                    console.log('WebGL context restored');
+                    // Восстанавливаем фон после восстановления контекста
+                    canvas.style.background = lightGray;
+                    canvas.style.backgroundColor = lightGray;
+                    canvas.style.setProperty('background-color', lightGray, 'important');
+                    canvas.style.setProperty('background', lightGray, 'important');
                   });
                 }}
-                style={{ width: '100%', height: '100%', background: 'transparent' }}
+                style={{ width: '100%', height: '100%', background: '#f3f4f6' }}
               >
                 <ambientLight intensity={0.5} />
                 <directionalLight position={[10, 10, 5]} intensity={1} />

@@ -63,6 +63,18 @@ const getAllFilesWithOwners = async () => {
       return [];
     }
     
+    // Проверяем, что это действительно директория
+    try {
+      const uploadDirStats = await fs.stat(uploadDir);
+      if (!uploadDirStats.isDirectory()) {
+        console.warn('Upload path is not a directory:', uploadDir);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error checking upload directory:', error);
+      return [];
+    }
+    
     // Получаем список всех папок в upload директории
     let entries;
     try {
@@ -156,7 +168,13 @@ const getAllFilesWithOwners = async () => {
     return allFiles;
   } catch (error) {
     console.error('Error reading all files:', error);
-    throw error;
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    // Возвращаем пустой массив вместо выброса ошибки, чтобы не ломать фронтенд
+    return [];
   }
 };
 
@@ -170,8 +188,6 @@ const getGltfBackground = async (filename, username) => {
       filePath = path.join(uploadDir, filename);
     }
 
-    console.log('Reading GLTF file from path:', filePath); // Debug log
-
     // Проверяем, что файл существует и это .gltf файл
     if (!filename.endsWith('.gltf')) {
       throw new Error('File must be a .gltf file');
@@ -179,8 +195,6 @@ const getGltfBackground = async (filename, username) => {
 
     const fileContent = await fs.readFile(filePath, 'utf-8');
     const gltf = JSON.parse(fileContent);
-    
-    console.log('GLTF scenes[0].extras.env:', JSON.stringify(gltf.scenes?.[0]?.extras?.env, null, 2)); // Debug log
 
     // Извлекаем информацию о background из extras.env
     // Ищем объект с type: "background" в extras.env
@@ -188,12 +202,9 @@ const getGltfBackground = async (filename, username) => {
     if (gltf.scenes && gltf.scenes[0] && gltf.scenes[0].extras && gltf.scenes[0].extras.env) {
       const backgroundEnv = gltf.scenes[0].extras.env.find(env => env.type === 'background');
       if (backgroundEnv) {
-        console.log('Found background env:', JSON.stringify(backgroundEnv, null, 2)); // Debug log
-        
         // Используем intensity из объекта background, если он есть
         // Если intensity отсутствует, используем значение по умолчанию 1.0
         const intensity = backgroundEnv.intensity !== undefined ? backgroundEnv.intensity : 1.0;
-        console.log('Extracted intensity:', intensity, 'Type:', typeof intensity); // Debug log
         
         backgroundData = {
           red: backgroundEnv.red !== undefined ? backgroundEnv.red : 255,
@@ -203,13 +214,7 @@ const getGltfBackground = async (filename, username) => {
           enabled: backgroundEnv.enabled !== undefined ? backgroundEnv.enabled : true,
           file: backgroundEnv.file || null
         };
-        
-        console.log('Returning background data:', backgroundData); // Debug log
-      } else {
-        console.log('Background env not found in extras.env'); // Debug log
       }
-    } else {
-      console.log('No extras.env found in scenes[0]'); // Debug log
     }
 
     // Если background данных нет, возвращаем default (red)
@@ -372,6 +377,33 @@ const getGltfInfo = async (filename, username) => {
   }
 };
 
+const getDefaultEnvParams = async () => {
+  try {
+    const configPath = path.join(__dirname, '../../config/default-env.json');
+    const fileContent = await fs.readFile(configPath, 'utf-8');
+    const defaultParams = JSON.parse(fileContent);
+    return defaultParams;
+  } catch (error) {
+    console.error('Error reading default env params:', error);
+    // Возвращаем дефолтные значения встроенные, если файл не найден
+    return [
+      {
+        type: "light",
+        name: "DefaultLight",
+        intensity: 1.0,
+        color: [255, 255, 255],
+        position: [0, 5, 5]
+      },
+      {
+        type: "environment",
+        file: "/img/HDRI_sea.hdr",
+        intensity: 0.5,
+        background: true
+      }
+    ];
+  }
+};
+
 const updateGltfEnv = async (filePath, envParams) => {
   try {
     // filePath приходит как /uploads/username/file.gltf
@@ -473,6 +505,7 @@ export default {
   getGltfBackground,
   updateGltfBackground,
   getGltfInfo,
-  updateGltfEnv
+  updateGltfEnv,
+  getDefaultEnvParams
 };
 

@@ -89,6 +89,9 @@ router.put('/gltf/:username/:filename/background', authenticate, uploadControlle
 // Получить информацию и экстрасы из GLTF файла
 router.get('/gltf/:username/:filename/info', authenticate, uploadController.getGltfInfo);
 
+// Получить дефолтные env параметры
+router.get('/gltf/env/defaults', authenticate, uploadController.getDefaultEnvParams);
+
 // Обновить env параметры в GLTF файле (только для администраторов)
 router.put('/gltf/env', authenticate, isAdmin, uploadController.updateGltfEnv);
 

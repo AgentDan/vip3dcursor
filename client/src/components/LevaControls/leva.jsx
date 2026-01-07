@@ -5,7 +5,6 @@ import { Environment } from '@react-three/drei';
 import uploadService from '../../services/upload.service';
 
 const BackgroundLightControls = ({ model }) => {
-    console.log('BackgroundLightControls', model);
     const { gl } = useThree();
     const [backgroundData, setBackgroundData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +98,6 @@ const BackgroundLightControls = ({ model }) => {
     // Обновляем значение в Leva через store.set() при загрузке данных из GLTF
     useEffect(() => {
         if (!isLoading && backgroundData && backgroundData.intensity !== undefined && store) {
-            console.log('Updating Leva intensity via store.set():', backgroundData.intensity, 'for model:', model?.filename); // Debug log
             setIntensityValue(backgroundData.intensity);
             
             // Обновляем значение в Leva через store
@@ -109,10 +107,8 @@ const BackgroundLightControls = ({ model }) => {
             // Проверяем, что значение обновилось
             setTimeout(() => {
                 const updatedValue = store.get(path);
-                console.log('Intensity in store after update:', updatedValue, 'expected:', backgroundData.intensity); // Debug log
                 if (updatedValue !== backgroundData.intensity) {
                     // Пробуем еще раз, если не обновилось
-                    console.warn('Intensity not updated correctly, retrying...');
                     store.set({ [path]: backgroundData.intensity });
                 }
             }, 100);
@@ -160,7 +156,6 @@ const BackgroundLightControls = ({ model }) => {
                 const saveData = {
                     intensity: intensity,
                 };
-                console.log('Saving to GLTF:', saveData); // Debug log
                 await uploadService.updateGltfBackground(
                     model.filename,
                     model.username || '',
@@ -182,21 +177,42 @@ const BackgroundLightControls = ({ model }) => {
     // Используем значения из backgroundData для цветов
     // Если есть HDRI файл, не применяем цвет фона (HDRI будет фоном)
     useEffect(() => {
-        if (!gl?.domElement || isLoading || !backgroundData) return;
-
+        const lightGray = '#f3f4f6'; // gray-100 в Tailwind - очень светлый
+        
+        if (!gl?.domElement) {
+            return;
+        }
+        
         const canvas = gl.domElement;
+        
+        // Всегда устанавливаем светлый фон по умолчанию сначала
+        canvas.style.background = lightGray;
+        canvas.style.backgroundColor = lightGray;
+        canvas.style.setProperty('background-color', lightGray, 'important');
+        canvas.style.setProperty('background', lightGray, 'important');
+        
+        if (isLoading) {
+            // Если идет загрузка, оставляем светлый фон
+            return;
+        }
+
+        if (!backgroundData) {
+            // Если нет backgroundData, оставляем светлый фон
+            return;
+        }
+
         const hdriFile = backgroundData?.file;
 
         // Если есть HDRI файл, делаем фон прозрачным, чтобы был виден HDRI
         if (hdriFile) {
             canvas.style.background = 'transparent';
+            canvas.style.backgroundColor = 'transparent';
             return;
         }
 
         const enabled = backgroundData.enabled ?? true;
         if (!enabled) {
-            // Если отключено, возвращаем прозрачный фон
-            canvas.style.background = 'transparent';
+            // Если отключено, оставляем светлый фон
             return;
         }
 
@@ -214,8 +230,15 @@ const BackgroundLightControls = ({ model }) => {
         const clampedG = Math.min(255, Math.max(0, g));
         const clampedB = Math.min(255, Math.max(0, b));
 
+        // Если цвет получается черным или очень темным (intensity = 0 или все цвета < 20), используем светлый фон
+        const isBlackOrVeryDark = (clampedR < 20 && clampedG < 20 && clampedB < 20) || intensity === 0;
+        const finalColor = isBlackOrVeryDark ? lightGray : `rgb(${clampedR}, ${clampedG}, ${clampedB})`;
+
         // Устанавливаем фон Canvas в 3D viewer
-        canvas.style.background = `rgb(${clampedR}, ${clampedG}, ${clampedB})`;
+        canvas.style.background = finalColor;
+        canvas.style.backgroundColor = finalColor;
+        canvas.style.setProperty('background-color', finalColor, 'important');
+        canvas.style.setProperty('background', finalColor, 'important');
     }, [intensity, backgroundData, gl, isLoading]);
 
     // Применяем HDRI из GLTF, если указан файл

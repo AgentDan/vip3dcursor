@@ -1,12 +1,15 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAdmin, getUsername, isAuthenticated } from '../../utils/jwt.utils';
+import uploadService from '../../services/upload.service';
 
 const HeaderMain = () => {
   const navigate = useNavigate();
   const authenticated = isAuthenticated();
   const userIsAdmin = isAdmin();
   const username = getUsername();
+  const [hasModels, setHasModels] = useState(false);
+  const [checkingModels, setCheckingModels] = useState(true);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -16,6 +19,34 @@ const HeaderMain = () => {
   const handleLogoClick = () => {
     window.location.reload();
   };
+
+  // Проверяем, есть ли у пользователя модели
+  useEffect(() => {
+    const checkUserModels = async () => {
+      if (!authenticated || !username) {
+        setHasModels(false);
+        setCheckingModels(false);
+        return;
+      }
+
+      try {
+        setCheckingModels(true);
+        const allFiles = await uploadService.getAllFilesWithOwners();
+        const userModels = allFiles.filter(file => 
+          file.username === username && 
+          (file.filename.endsWith('.gltf') || file.filename.endsWith('.glb'))
+        );
+        setHasModels(userModels.length > 0);
+      } catch (error) {
+        console.error('Error checking user models:', error);
+        setHasModels(false);
+      } finally {
+        setCheckingModels(false);
+      }
+    };
+
+    checkUserModels();
+  }, [authenticated, username]);
 
   return (
     <div className="absolute top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-[50px] border-b border-white/20">
@@ -35,17 +66,25 @@ const HeaderMain = () => {
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             <button
               onClick={() => {
-                if (authenticated) {
+                if (authenticated && hasModels) {
                   navigate('/model');
                 }
               }}
-              disabled={!authenticated}
+              disabled={!authenticated || !hasModels || checkingModels}
               className={`px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md rounded-lg transition-all font-light text-xs sm:text-sm uppercase tracking-wider border flex-shrink-0 ${
-                authenticated
+                authenticated && hasModels && !checkingModels
                   ? 'bg-white/10 text-black hover:bg-white/20 border-white/20 cursor-pointer'
                   : 'bg-gray-100/50 text-gray-400 border-gray-200/30 cursor-not-allowed opacity-60'
               }`}
-              title={!authenticated ? "Login Required" : "View 3D Models"}
+              title={
+                !authenticated 
+                  ? "Login Required" 
+                  : !hasModels 
+                    ? "No 3D models available. Upload models through the admin panel."
+                    : checkingModels
+                      ? "Checking models..."
+                      : "View 3D Models"
+              }
             >
               <span className="flex items-center whitespace-nowrap">
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
