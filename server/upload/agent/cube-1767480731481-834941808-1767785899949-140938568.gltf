@@ -185,7 +185,7 @@
             "maxAzimuthAngle": 1.6865999999999999,
             "minPolarAngle": 3.57681469282041,
             "maxPolarAngle": 4.06681469282041,
-            "orbitFree": false
+            "orbitFree": true
           }
         ]
       },

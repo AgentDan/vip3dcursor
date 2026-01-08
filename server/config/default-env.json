@@ -70,6 +70,12 @@
     "minPolarAngle": 0.785,
     "maxPolarAngle": 1.885,
     "orbitFree": true
+  },
+  {
+    "type": "camera",
+    "position": [0, 0, 5],
+    "target": [0, 0, 0],
+    "fov": 50
   }
 ]
 
