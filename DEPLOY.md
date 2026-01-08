@@ -14,11 +14,15 @@ JWT_SECRET="your_jwt_secret_key"
 # Порт сервера
 PORT=3000
 
-# Режим работыnp
+# Режим работы
 NODE_ENV=production
 
 # URL клиента (для CORS и Socket.IO)
 CLIENT_URL=https://your-domain.com
+
+# Telegram Bot (опционально)
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_ADMIN_CHAT_ID=your_telegram_chat_id
 ```
 
 ### Клиент
@@ -53,7 +57,43 @@ CLIENT_URL=https://your-domain.com
 
 **Модели:** `server/modules/chat/chat.model.js`
 
-### 4. Статические файлы
+### 4. Telegram Bot (опционально)
+
+Для управления чатами через Telegram необходимо:
+
+1. **Создать бота в Telegram:**
+   - Напишите [@BotFather](https://t.me/BotFather) в Telegram
+   - Отправьте команду `/newbot`
+   - Следуйте инструкциям для создания бота
+   - Сохраните полученный токен
+
+2. **Получить Chat ID администратора:**
+   - Напишите [@userinfobot](https://t.me/userinfobot) в Telegram
+   - Скопируйте ваш Chat ID
+
+3. **Добавить переменные в `.env`:**
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+   TELEGRAM_ADMIN_CHAT_ID=your_chat_id_from_userinfobot
+   ```
+
+4. **Команды бота:**
+   - `/start` - Приветствие и список команд
+   - `/chats` - Список всех активных чатов
+   - `/chats_unread` - Список чатов с непрочитанными сообщениями
+   - `/chat <chatId>` - История конкретного чата
+   - `/reply <chatId> <сообщение>` - Ответить пользователю
+   - `/help` - Справка по командам
+
+5. **Автоматические уведомления:**
+   - При получении нового сообщения от пользователя админ получает уведомление в Telegram
+   - Ответы из Telegram автоматически отправляются пользователю через веб-интерфейс
+
+**Файлы:**
+- `server/modules/telegram/telegram.bot.js` - Основной файл бота
+- `server/modules/telegram/telegram.service.js` - Сервис для работы с Telegram
+
+### 5. Статические файлы
 
 В продакшене сервер раздает статические файлы из `client/dist`:
 - Все запросы, не начинающиеся с `/api`, перенаправляются на `index.html`
@@ -65,6 +105,11 @@ CLIENT_URL=https://your-domain.com
 2. **Socket.IO:** Убедитесь, что WebSocket подключение устанавливается (проверьте консоль браузера)
 3. **Чат:** Проверьте отправку и получение сообщений в реальном времени
 4. **MongoDB:** Убедитесь, что сообщения сохраняются в базе данных
+5. **Telegram Bot (если настроен):**
+   - Отправьте `/start` боту в Telegram
+   - Проверьте получение уведомлений о новых сообщениях
+   - Проверьте отправку ответов через команду `/reply`
+   - Убедитесь, что ответы доставляются пользователям в веб-интерфейсе
 
 ## Важные моменты
 
@@ -72,3 +117,5 @@ CLIENT_URL=https://your-domain.com
 - Socket.IO использует текущий домен в продакшене
 - MongoDB должна быть доступна из сервера
 - CORS настроен для работы с указанным `CLIENT_URL`
+- Telegram бот работает только если установлены `TELEGRAM_BOT_TOKEN` и `TELEGRAM_ADMIN_CHAT_ID`
+- Все сообщения синхронизируются между веб-интерфейсом и Telegram

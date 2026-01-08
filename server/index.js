@@ -11,6 +11,7 @@ import adminRoutes from './modules/admin/admin.routes.js';
 import uploadRoutes from './modules/upload/upload.routes.js';
 import chatRoutes from './modules/chat/chat.routes.js';
 import { setupChatSocket } from './modules/chat/chat.socket.js';
+import { initTelegramBot } from './modules/telegram/telegram.bot.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,7 +43,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'upload')));
 // MongoDB connection
 const mongoUri = process.env.MONGODB_URI?.replace(/^["']|["']$/g, '');
 mongoose.connect(mongoUri)
-  .then(() => console.log('MongoDB connected'))
+  .then(() => {
+    console.log('MongoDB connected');
+    // Инициализация Telegram бота после подключения к MongoDB
+    initTelegramBot(io);
+  })
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes

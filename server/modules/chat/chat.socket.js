@@ -1,5 +1,6 @@
 import chatService from './chat.service.js';
 import jwt from 'jsonwebtoken';
+import { notifyAdminInTelegram } from '../telegram/telegram.bot.js';
 
 const authenticateSocket = (socket, next) => {
   try {
@@ -97,6 +98,13 @@ export const setupChatSocket = (io) => {
           // Обновляем список чатов для админов
           const chats = await chatService.getAllChats();
           io.to('admins').emit('chats-list', chats);
+          
+          // Отправляем уведомление админу в Telegram
+          try {
+            await notifyAdminInTelegram(chat, message);
+          } catch (error) {
+            console.error('Error sending Telegram notification:', error);
+          }
         }
         
         // Помечаем как прочитанное, если админ ответил
