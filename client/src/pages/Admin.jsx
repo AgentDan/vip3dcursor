@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminService from '../services/admin.service';
 import uploadService from '../services/upload.service';
 import { getFileUrl } from '../utils/config';
+import { isAdmin } from '../utils/jwt.utils';
+import { connectSocket, disconnectSocket, getSocket } from '../services/socket.service';
+import chatService from '../services/chat.service';
+import ChatMessage from '../components/SupportChat/ChatMessage';
 
 function Admin() {
   const [users, setUsers] = useState([]);
@@ -10,7 +14,7 @@ function Admin() {
   const [loading, setLoading] = useState(true);
   const [filesLoading, setFilesLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('users'); // 'users', 'files'
+  const [activeTab, setActiveTab] = useState('users'); // 'users', 'files', 'chat'
   const [selectedOwner, setSelectedOwner] = useState('all'); // 'all' or username
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -28,6 +32,18 @@ function Admin() {
   });
   const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
+  
+  // Chat state
+  const [chats, setChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatMessageText, setChatMessageText] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const chatMessagesEndRef = useRef(null);
+  const socketRef = useRef(null);
+  const selectedChatRef = useRef(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -46,6 +62,166 @@ function Admin() {
 
     fetchUsers();
   }, [navigate]);
+
+  // Chat functions
+  const updateUnreadCounts = async (chatsList) => {
+    const counts = {};
+    for (const chat of chatsList) {
+      try {
+        const chatMessages = await chatService.getChatHistory(chat._id);
+        const unread = chatMessages.messages.filter(m => m.from === 'user' && !m.read).length;
+        counts[chat._id] = unread;
+      } catch (error) {
+        counts[chat._id] = 0;
+      }
+    }
+    setUnreadCounts(counts);
+  };
+
+  const loadChatHistory = async (chatId) => {
+    try {
+      const data = await chatService.getChatHistory(chatId);
+      setChatMessages(data.messages || []);
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
+  };
+
+  const scrollChatToBottom = () => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const markChatAsRead = async (chatId) => {
+    try {
+      await chatService.markAsRead(chatId);
+      const socket = getSocket();
+      if (socket) {
+        socket.emit('mark-read', { chatId });
+      }
+      setUnreadCounts(prev => ({ ...prev, [chatId]: 0 }));
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
+  const handleSelectChat = (chat) => {
+    setSelectedChat(chat);
+    selectedChatRef.current = chat;
+    setChatMessages([]);
+  };
+
+  const handleSendChatMessage = async (e) => {
+    e.preventDefault();
+    
+    if (!chatMessageText.trim() || !selectedChat) return;
+    
+    setChatSending(true);
+    const socket = getSocket();
+    
+    if (!socket) {
+      console.error('Socket not connected');
+      setChatSending(false);
+      return;
+    }
+    
+    try {
+      socket.emit('send-message', { chatId: selectedChat._id, text: chatMessageText });
+      setChatMessageText('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setChatSending(false);
+    }
+  };
+
+  const formatChatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'только что';
+    if (minutes < 60) return `${minutes} мин назад`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)} ч назад`;
+    
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Chat Socket.IO setup
+  useEffect(() => {
+    if (activeTab === 'chat' && isAdmin()) {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      setChatLoading(true);
+
+      // Подключаемся к Socket.IO
+      const socket = connectSocket(token);
+      socketRef.current = socket;
+
+      // Обработчики Socket.IO
+      const handleChatsList = (chatsList) => {
+        setChats(chatsList);
+        setChatLoading(false);
+        updateUnreadCounts(chatsList);
+      };
+
+      const handleNewMessage = (data) => {
+        // Обновляем сообщения если это текущий чат
+        const currentChatId = selectedChatRef.current?._id;
+        if (currentChatId && currentChatId === data.chat._id) {
+          setChatMessages(prevMessages => {
+            const newMessages = [...prevMessages, data.message];
+            setTimeout(() => scrollChatToBottom(), 0);
+            return newMessages;
+          });
+        }
+        
+        // Обновляем список чатов
+        socket.emit('get-chat');
+      };
+
+      const handleError = (error) => {
+        console.error('Socket error:', error);
+        setChatLoading(false);
+      };
+
+      socket.on('chats-list', handleChatsList);
+      socket.on('new-message', handleNewMessage);
+      socket.on('error', handleError);
+
+      // Запрашиваем список чатов
+      socket.emit('get-chat');
+
+      return () => {
+        socket.off('chats-list', handleChatsList);
+        socket.off('new-message', handleNewMessage);
+        socket.off('error', handleError);
+      };
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    if (selectedChat && activeTab === 'chat') {
+      loadChatHistory(selectedChat._id);
+      markChatAsRead(selectedChat._id);
+    }
+  }, [selectedChat, activeTab]);
+
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+      scrollChatToBottom();
+    }
+  }, [chatMessages]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -311,37 +487,60 @@ function Admin() {
 
               {/* Tabs */}
               <div className="mb-6 sm:mb-8 border-b border-gray-200/50">
-                <nav className="flex space-x-4 sm:space-x-8 md:space-x-12">
-                  <button
-                    onClick={() => {
-                      setActiveTab('users');
-                      setShowCreateForm(false);
-                      setShowUploadForm(false);
-                    }}
-                    className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
-                      activeTab === 'users'
-                        ? 'border-gray-900 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Users
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('files');
-                      setSelectedOwner('all'); // Сбрасываем фильтр при переключении
-                      setShowUploadForm(false); // Скрываем форму загрузки при переключении
-                      fetchAllFiles();
-                    }}
-                    className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
-                      activeTab === 'files'
-                        ? 'border-gray-900 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    All Files
-                  </button>
-                </nav>
+                <div className="flex items-center justify-between">
+                  <nav className="flex space-x-4 sm:space-x-8 md:space-x-12">
+                    <button
+                      onClick={() => {
+                        setActiveTab('users');
+                        setShowCreateForm(false);
+                        setShowUploadForm(false);
+                      }}
+                      className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
+                        activeTab === 'users'
+                          ? 'border-gray-900 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Users
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('files');
+                        setSelectedOwner('all'); // Сбрасываем фильтр при переключении
+                        setShowUploadForm(false); // Скрываем форму загрузки при переключении
+                        fetchAllFiles();
+                      }}
+                      className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
+                        activeTab === 'files'
+                          ? 'border-gray-900 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      All Files
+                    </button>
+                    {isAdmin() && (
+                      <button
+                        onClick={() => {
+                          setActiveTab('chat');
+                          setShowCreateForm(false);
+                          setShowUploadForm(false);
+                        }}
+                        className={`py-3 sm:py-4 px-1 border-b-2 font-light text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer ${
+                          activeTab === 'chat'
+                            ? 'border-gray-900 text-gray-900'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        Chat
+                        {Object.values(unreadCounts).reduce((sum, count) => sum + count, 0) > 0 && (
+                          <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            {Object.values(unreadCounts).reduce((sum, count) => sum + count, 0)}
+                          </span>
+                        )}
+                      </button>
+                    )}
+                  </nav>
+                </div>
               </div>
 
               {activeTab === 'users' && (
@@ -763,6 +962,105 @@ function Admin() {
                 </div>
               )}
 
+              {activeTab === 'chat' && isAdmin() && (
+                <div className="flex h-[600px] border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Sidebar */}
+                  <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
+                    <div className="p-4 border-b border-gray-200">
+                      <h2 className="text-lg font-semibold text-gray-900">Чаты поддержки</h2>
+                      {Object.values(unreadCounts).reduce((sum, count) => sum + count, 0) > 0 && (
+                        <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          {Object.values(unreadCounts).reduce((sum, count) => sum + count, 0)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      {chatLoading ? (
+                        <div className="p-4 text-center text-gray-500">Загрузка...</div>
+                      ) : chats.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">Нет активных чатов</div>
+                      ) : (
+                        chats.map(chat => (
+                          <div
+                            key={chat._id}
+                            className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                              selectedChat?._id === chat._id ? 'bg-blue-50' : ''
+                            }`}
+                            onClick={() => handleSelectChat(chat)}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="font-medium text-gray-900">@{chat.username}</div>
+                              {unreadCounts[chat._id] > 0 && (
+                                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                  {unreadCounts[chat._id]}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {formatChatDate(chat.lastMessageAt)}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Chat Area */}
+                  <div className="flex-1 flex flex-col bg-gray-50">
+                    {selectedChat ? (
+                      <>
+                        <div className="p-4 border-b border-gray-200 bg-white">
+                          <h3 className="font-semibold text-gray-900">@{selectedChat.username}</h3>
+                          <p className="text-sm text-gray-500">
+                            {selectedChat.status === 'active' ? 'Активен' : 'Ожидает ответа'}
+                          </p>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                          {chatMessages.length === 0 ? (
+                            <div className="flex items-center justify-center h-full text-gray-500">
+                              Нет сообщений
+                            </div>
+                          ) : (
+                            chatMessages.map(message => (
+                              <ChatMessage
+                                key={message._id}
+                                message={message}
+                                isOwn={message.from === 'admin'}
+                              />
+                            ))
+                          )}
+                          <div ref={chatMessagesEndRef} />
+                        </div>
+
+                        <form onSubmit={handleSendChatMessage} className="p-4 border-t border-gray-200 bg-white">
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={chatMessageText}
+                              onChange={(e) => setChatMessageText(e.target.value)}
+                              placeholder="Введите сообщение..."
+                              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              disabled={chatSending}
+                            />
+                            <button
+                              type="submit"
+                              disabled={chatSending || !chatMessageText.trim()}
+                              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {chatSending ? 'Отправка...' : 'Отправить'}
+                            </button>
+                          </div>
+                        </form>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        Выберите чат из списка слева
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>

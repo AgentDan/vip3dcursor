@@ -4,12 +4,15 @@ import {ScrollControls} from "@react-three/drei";
 import HeaderMain from "./HeaderMain.jsx";
 import Overlay from "./Overlay.jsx";
 import Bubble from "./Bubble.jsx";
+import SupportChat from "../../components/SupportChat/SupportChat.jsx";
 
 const Home = () => {
     return (
-        <div className="relative w-screen h-screen">
-            <HeaderMain/>
-            <Canvas 
+        <>
+            <SupportChat/>
+            <div className="relative w-screen h-screen overflow-hidden">
+                <HeaderMain/>
+                <Canvas 
               style={{background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0)'}} 
               shadows 
               camera={{position: [0, 0, 0], fov: 50, far: 50000}}
@@ -34,6 +37,7 @@ const Home = () => {
                 </ScrollControls>
             </Canvas>
         </div>
+        </>
     );
 };
 
