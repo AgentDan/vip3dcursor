@@ -1,6 +1,5 @@
-import { API_BASE_URL } from '../utils/config.js';
-
-const API_URL = `${API_BASE_URL}/api/chat`;
+// Используем относительный путь для работы в продакшене и разработке
+const API_URL = '/api/chat';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

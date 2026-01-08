@@ -22,10 +22,13 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || '*',
+    origin: process.env.NODE_ENV === 'production' 
+      ? (process.env.CLIENT_URL || '*')
+      : '*',
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling']
 });
 
 const PORT = process.env.PORT || 3000;

@@ -8,13 +8,32 @@ export const connectSocket = (token) => {
     return socket;
   }
 
-  const serverUrl = API_BASE_URL || 'http://127.0.0.1:3000';
+  // В продакшене используем текущий origin, в разработке - из конфига
+  const isProduction = import.meta.env.PROD;
+  const serverUrl = isProduction 
+    ? window.location.origin  // В продакшене используем текущий домен
+    : (API_BASE_URL || 'http://127.0.0.1:3000');
   
   socket = io(serverUrl, {
     auth: {
       token: token
     },
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5
+  });
+
+  socket.on('connect', () => {
+    console.log('Socket.IO connected to:', serverUrl);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket.IO disconnected');
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('Socket.IO connection error:', error);
   });
 
   return socket;
