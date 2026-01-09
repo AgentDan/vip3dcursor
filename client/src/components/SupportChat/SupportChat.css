@@ -5,13 +5,15 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #111827;
   font-size: 24px;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
   z-index: 99999 !important;
   display: flex;
   align-items: center;
@@ -22,6 +24,7 @@
 .support-chat-button:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .support-chat-badge {
@@ -46,24 +49,36 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1999;
+  pointer-events: auto;
 }
 
 .support-chat-modal {
-  width: 100%;
-  max-width: 500px;
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 380px;
+  max-width: calc(100vw - 40px);
   height: 600px;
-  max-height: 90vh;
+  max-height: calc(100vh - 140px);
   background: white;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+}
+
+@media (max-width: 480px) {
+  .support-chat-modal {
+    bottom: 90px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    height: calc(100vh - 110px);
+    max-height: calc(100vh - 110px);
+  }
 }
 
 .support-chat-header {
@@ -238,4 +253,32 @@
 
 .support-chat-messages::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.support-chat-date-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+  position: relative;
+}
+
+.support-chat-date-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.support-chat-date-divider span {
+  background: white;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #6b7280;
+  position: relative;
+  z-index: 1;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }

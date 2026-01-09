@@ -147,11 +147,11 @@ function Admin() {
     const diff = now - date;
     const minutes = Math.floor(diff / 60000);
     
-    if (minutes < 1) return 'только что';
-    if (minutes < 60) return `${minutes} мин назад`;
-    if (minutes < 1440) return `${Math.floor(minutes / 60)} ч назад`;
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)} h ago`;
     
-    return date.toLocaleDateString('ru-RU', {
+    return date.toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -526,7 +526,7 @@ function Admin() {
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
-                      All Files
+                      Files
                     </button>
                     {isAdmin() && (
                       <button
@@ -715,7 +715,7 @@ function Admin() {
               {activeTab === 'files' && (
                 <div className="mb-6 sm:mb-8">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4 sm:mb-6">
-                    <h2 className="text-2xl sm:text-3xl font-light text-gray-900 tracking-tight">All Files</h2>
+                    <h2 className="text-2xl sm:text-3xl font-light text-gray-900 tracking-tight">Files</h2>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <select
@@ -977,7 +977,7 @@ function Admin() {
                   {/* Sidebar */}
                   <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
                     <div className="p-4 border-b border-gray-200">
-                      <h2 className="text-lg font-semibold text-gray-900">Чаты поддержки</h2>
+                      <h2 className="text-lg font-semibold text-gray-900">Support Chats</h2>
                       {Object.values(unreadCounts).reduce((sum, count) => sum + count, 0) > 0 && (
                         <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                           {Object.values(unreadCounts).reduce((sum, count) => sum + count, 0)}
@@ -986,9 +986,9 @@ function Admin() {
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       {chatLoading ? (
-                        <div className="p-4 text-center text-gray-500">Загрузка...</div>
+                        <div className="p-4 text-center text-gray-500">Loading...</div>
                       ) : chats.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500">Нет активных чатов</div>
+                        <div className="p-4 text-center text-gray-500">No active chats</div>
                       ) : (
                         chats.map(chat => (
                           <div
@@ -1022,14 +1022,14 @@ function Admin() {
                         <div className="p-4 border-b border-gray-200 bg-white">
                           <h3 className="font-semibold text-gray-900">@{selectedChat.username}</h3>
                           <p className="text-sm text-gray-500">
-                            {selectedChat.status === 'active' ? 'Активен' : 'Ожидает ответа'}
+                            {selectedChat.status === 'active' ? 'Active' : 'Waiting for response'}
                           </p>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-4">
                           {chatMessages.length === 0 ? (
                             <div className="flex items-center justify-center h-full text-gray-500">
-                              Нет сообщений
+                              No messages
                             </div>
                           ) : (
                             chatMessages.map(message => (
@@ -1049,7 +1049,7 @@ function Admin() {
                               type="text"
                               value={chatMessageText}
                               onChange={(e) => setChatMessageText(e.target.value)}
-                              placeholder="Введите сообщение..."
+                              placeholder="Type a message..."
                               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                               disabled={chatSending}
                             />
@@ -1058,14 +1058,14 @@ function Admin() {
                               disabled={chatSending || !chatMessageText.trim()}
                               className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                              {chatSending ? 'Отправка...' : 'Отправить'}
+                              {chatSending ? 'Sending...' : 'Send'}
                             </button>
                           </div>
                         </form>
                       </>
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-500">
-                        Выберите чат из списка слева
+                        Select a chat from the list on the left
                       </div>
                     )}
                   </div>

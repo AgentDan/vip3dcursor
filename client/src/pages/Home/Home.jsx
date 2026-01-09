@@ -4,13 +4,10 @@ import {ScrollControls} from "@react-three/drei";
 import HeaderMain from "./HeaderMain.jsx";
 import Overlay from "./Overlay.jsx";
 import Bubble from "./Bubble.jsx";
-import SupportChat from "../../components/SupportChat/SupportChat.jsx";
 
 const Home = () => {
     return (
-        <>
-            <SupportChat/>
-            <div className="relative w-screen h-screen overflow-hidden">
+        <div className="relative w-screen h-screen overflow-hidden">
                 <HeaderMain/>
                 <Canvas 
               style={{background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0)'}} 
@@ -37,7 +34,6 @@ const Home = () => {
                 </ScrollControls>
             </Canvas>
         </div>
-        </>
     );
 };
 

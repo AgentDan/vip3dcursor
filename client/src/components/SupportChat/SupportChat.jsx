@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { connectSocket, disconnectSocket, getSocket } from '../../services/socket.service';
 import chatService from '../../services/chat.service';
 import { isAuthenticated } from '../../utils/jwt.utils';
@@ -6,7 +7,8 @@ import ChatMessage from './ChatMessage';
 import './SupportChat.css';
 
 function SupportChat() {
-  const authenticated = isAuthenticated();
+  const location = useLocation();
+  const [authenticated, setAuthenticated] = useState(isAuthenticated());
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [chat, setChat] = useState(null);
@@ -17,9 +19,14 @@ function SupportChat() {
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
+  // Обновляем статус авторизации при изменении маршрута
+  useEffect(() => {
+    setAuthenticated(isAuthenticated());
+  }, [location.pathname]);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token || !authenticated) return;
 
     // Подключаемся к Socket.IO
     const socket = connectSocket(token);
@@ -70,7 +77,7 @@ function SupportChat() {
       disconnectSocket();
       clearInterval(unreadInterval);
     };
-  }, [isOpen]);
+  }, [isOpen, authenticated]);
 
   useEffect(() => {
     if (isOpen) {
@@ -146,17 +153,80 @@ function SupportChat() {
     }
   };
 
-  if (!authenticated) {
+  // Функция для форматирования даты
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+    if (dateOnly.getTime() === todayOnly.getTime()) {
+      return 'Today';
+    } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        day: 'numeric', 
+        month: 'long',
+        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      });
+    }
+  };
+
+  // Функция для проверки, нужно ли показывать разделитель даты
+  const shouldShowDateDivider = (currentMessage, previousMessage) => {
+    if (!previousMessage) return true;
+    
+    const currentDate = new Date(currentMessage.timestamp || currentMessage.createdAt);
+    const previousDate = new Date(previousMessage.timestamp || previousMessage.createdAt);
+    
+    const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+    const previousDateOnly = new Date(previousDate.getFullYear(), previousDate.getMonth(), previousDate.getDate());
+    
+    return currentDateOnly.getTime() !== previousDateOnly.getTime();
+  };
+
+  // Функция для рендеринга сообщений с разделителями дат
+  const renderMessagesWithDates = () => {
+    if (messages.length === 0) return null;
+
+    return messages.map((message, index) => {
+      const previousMessage = index > 0 ? messages[index - 1] : null;
+      const showDateDivider = shouldShowDateDivider(message, previousMessage);
+
+      return (
+        <React.Fragment key={message._id}>
+          {showDateDivider && (
+            <div className="support-chat-date-divider">
+              <span>{formatDate(message.timestamp || message.createdAt)}</span>
+            </div>
+          )}
+          <ChatMessage
+            message={message}
+            isOwn={message.from === 'user'}
+          />
+        </React.Fragment>
+      );
+    });
+  };
+
+  // Не показываем на странице логина
+  if (location.pathname === '/login' || !authenticated) {
     return null;
   }
 
   return (
     <>
-      {/* Кнопка открытия чата */}
+      {/* Кнопка открытия/закрытия чата */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(!isOpen)}
         className="support-chat-button"
-        title="Написать в поддержку"
+        title={isOpen ? "Close support chat" : "Open support chat"}
+        style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 99999 }}
       >
         💬
         {unreadCount > 0 && (
@@ -166,10 +236,11 @@ function SupportChat() {
 
       {/* Модальное окно чата */}
       {isOpen && (
-        <div className="support-chat-overlay" onClick={() => setIsOpen(false)}>
+        <>
+          <div className="support-chat-overlay" onClick={() => setIsOpen(false)}></div>
           <div className="support-chat-modal" onClick={(e) => e.stopPropagation()}>
             <div className="support-chat-header">
-              <h3>Поддержка</h3>
+              <h3>Support</h3>
               <button
                 onClick={() => setIsOpen(false)}
                 className="support-chat-close"
@@ -180,19 +251,13 @@ function SupportChat() {
 
             <div className="support-chat-messages">
               {loading ? (
-                <div className="support-chat-loading">Загрузка...</div>
+                <div className="support-chat-loading">Loading...</div>
               ) : messages.length === 0 ? (
                 <div className="support-chat-empty">
-                  Нет сообщений. Напишите нам, и мы ответим!
+                  No messages yet. Write to us and we'll respond!
                 </div>
               ) : (
-                messages.map(message => (
-                  <ChatMessage
-                    key={message._id}
-                    message={message}
-                    isOwn={message.from === 'user'}
-                  />
-                ))
+                renderMessagesWithDates()
               )}
               <div ref={messagesEndRef} />
             </div>
@@ -202,7 +267,7 @@ function SupportChat() {
                 type="text"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Введите сообщение..."
+                placeholder="Type a message..."
                 className="support-chat-input"
                 disabled={sending}
               />
@@ -215,7 +280,7 @@ function SupportChat() {
               </button>
             </form>
           </div>
-        </div>
+        </>
       )}
     </>
   );
