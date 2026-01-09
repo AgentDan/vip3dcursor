@@ -5,11 +5,62 @@ import TelegramService from './telegram.service.js';
 let bot = null;
 let telegramService = null;
 let ioInstance = null;
+let isInitializing = false;
+let restartTimeout = null;
+let restartAttempts = 0;
+const MAX_RESTART_ATTEMPTS = 3;
+
+/**
+ * Остановка существующего бота
+ */
+const stopExistingBot = async (token) => {
+  // Отменяем запланированный перезапуск, если он есть
+  if (restartTimeout) {
+    clearTimeout(restartTimeout);
+    restartTimeout = null;
+  }
+
+  if (bot) {
+    try {
+      console.log('🛑 Останавливаю предыдущий экземпляр Telegram бота...');
+      bot.stopPolling();
+      // Даем время на завершение polling
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      bot = null;
+      console.log('✅ Предыдущий экземпляр Telegram бота остановлен');
+    } catch (error) {
+      console.warn('⚠️  Ошибка при остановке предыдущего бота:', error.message);
+      bot = null;
+    }
+  }
+
+  // Дополнительно: пытаемся остановить polling через Telegram API напрямую
+  if (token) {
+    try {
+      const tempBot = new TelegramBot(token, { polling: false });
+      // Удаляем webhook, если он установлен (на всякий случай)
+      await tempBot.deleteWebHook({ drop_pending_updates: true });
+      // Останавливаем любые активные getUpdates
+      await tempBot.stopPolling();
+      console.log('✅ Telegram API очищен от предыдущих подключений');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    } catch (error) {
+      // Игнорируем ошибки, если нет активных подключений
+      console.log('ℹ️  Telegram API уже свободен');
+    }
+  }
+};
 
 /**
  * Инициализация Telegram бота
  */
-export const initTelegramBot = (io) => {
+export const initTelegramBot = async (io) => {
+  // Предотвращаем множественные одновременные инициализации
+  if (isInitializing) {
+    console.log('⏳ Инициализация бота уже выполняется, пропускаю...');
+    return bot;
+  }
+
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
@@ -23,24 +74,69 @@ export const initTelegramBot = (io) => {
     return null;
   }
 
+  isInitializing = true;
+
   try {
-    bot = new TelegramBot(token, { polling: true });
+    // Останавливаем существующий бот, если он есть
+    await stopExistingBot(token);
+    
+    // Дополнительная задержка для гарантии освобождения ресурсов
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Увеличена до 3 секунд
+
+    // Создаем бота БЕЗ polling сначала
+    bot = new TelegramBot(token, { polling: false });
     telegramService = new TelegramService(io);
     ioInstance = io;
 
-    console.log('✅ Telegram бот инициализирован');
-    console.log(`📱 Admin Chat ID: ${adminChatId}`);
+    // Проверяем доступность бота через API
+    try {
+      const botInfo = await bot.getMe();
+      console.log(`🤖 Бот доступен: @${botInfo.username}`);
+    } catch (error) {
+      console.error('❌ Ошибка при проверке бота:', error.message);
+      throw error;
+    }
 
-    // Регистрация обработчиков команд
+    // Убеждаемся, что webhook не установлен
+    try {
+      await bot.deleteWebHook({ drop_pending_updates: true });
+      console.log('✅ Webhook очищен');
+    } catch (error) {
+      console.log('ℹ️  Webhook уже очищен или не был установлен');
+    }
+
+    // Регистрация обработчиков команд (до запуска polling)
     setupBotCommands(bot, telegramService);
 
     // Подключение к событиям Socket.IO для уведомлений
     setupSocketIOListeners(io, bot, telegramService);
 
+    // Теперь запускаем polling отдельно
+    console.log('🔄 Запускаю polling...');
+    bot.startPolling({
+      restart: false, // Отключаем автоматический перезапуск
+      polling: {
+        interval: 1000,
+        autoStart: true,
+        params: {
+          timeout: 10
+        }
+      }
+    });
+
+    console.log('✅ Telegram бот инициализирован');
+    console.log(`📱 Admin Chat ID: ${adminChatId}`);
+
+    // Сбрасываем счетчик попыток при успешной инициализации
+    restartAttempts = 0;
+    
     return bot;
   } catch (error) {
     console.error('❌ Ошибка инициализации Telegram бота:', error);
+    bot = null;
     return null;
+  } finally {
+    isInitializing = false;
   }
 };
 
@@ -185,10 +281,62 @@ function setupBotCommands(bot, telegramService) {
   });
 
   // Обработка ошибок
-  bot.on('polling_error', (error) => {
+  bot.on('polling_error', async (error) => {
     console.error('❌ Telegram bot polling error:', error.message);
     if (error.code === 'ETELEGRAM') {
-      console.error('   Проверьте правильность TELEGRAM_BOT_TOKEN');
+      if (error.message.includes('409') || error.message.includes('Conflict')) {
+        console.error('   ⚠️  Конфликт: другой экземпляр бота уже запущен');
+        
+        // Проверяем количество попыток перезапуска
+        if (restartAttempts >= MAX_RESTART_ATTEMPTS) {
+          console.error(`   ❌ Достигнут лимит попыток перезапуска (${MAX_RESTART_ATTEMPTS})`);
+          console.error('   💡 ОСТАНОВИТЕ ВСЕ ПРОЦЕССЫ СЕРВЕРА ВРУЧНУЮ И ПЕРЕЗАПУСТИТЕ');
+          console.error('   💡 Выполните: Get-Process node | Stop-Process -Force');
+          return;
+        }
+
+        // Отменяем предыдущий таймаут перезапуска, если он есть
+        if (restartTimeout) {
+          clearTimeout(restartTimeout);
+          restartTimeout = null;
+        }
+
+        restartAttempts++;
+        console.error(`   🔄 Попытка перезапуска ${restartAttempts}/${MAX_RESTART_ATTEMPTS}`);
+        console.error('   💡 Решение: остановите все процессы сервера и перезапустите');
+        console.error('   🔄 Пытаюсь остановить текущий polling...');
+        
+        // Пытаемся остановить текущий polling и перезапустить через 10 секунд
+        try {
+          const token = process.env.TELEGRAM_BOT_TOKEN;
+          if (bot) {
+            bot.stopPolling();
+            bot = null;
+            console.log('🛑 Остановлен polling из-за конфликта.');
+          }
+          
+          // Останавливаем через API
+          if (token) {
+            await stopExistingBot(token);
+          }
+          
+          console.log('⏳ Ожидание 10 секунд перед перезапуском...');
+          
+          // Перезапускаем бота через 10 секунд (увеличено для гарантии освобождения)
+          restartTimeout = setTimeout(async () => {
+            if (ioInstance && !isInitializing) {
+              console.log('🔄 Перезапускаю Telegram бота...');
+              await initTelegramBot(ioInstance);
+            }
+            restartTimeout = null;
+          }, 10000);
+        } catch (err) {
+          console.error('Ошибка при остановке polling:', err);
+          console.error('⚠️  Перезапустите сервер вручную');
+        }
+      } else {
+        console.error('   Проверьте правильность TELEGRAM_BOT_TOKEN');
+      }
     }
   });
 
@@ -254,4 +402,12 @@ export const notifyAdminInTelegram = async (chat, message) => {
  */
 export const getTelegramBot = () => {
   return bot;
+};
+
+/**
+ * Остановить бота (для graceful shutdown)
+ */
+export const stopTelegramBot = async () => {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  await stopExistingBot(token);
 };

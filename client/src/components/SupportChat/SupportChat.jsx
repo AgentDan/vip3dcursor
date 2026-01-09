@@ -40,6 +40,10 @@ function SupportChat() {
       if (data.chat) {
         setChat(data.chat);
       }
+      // Если сообщение от админа и чат закрыт - увеличиваем счетчик непрочитанных
+      if (data.message.from === 'admin' && !isOpen) {
+        setUnreadCount(prev => prev + 1);
+      }
       scrollToBottom();
     });
 
@@ -57,20 +61,30 @@ function SupportChat() {
     // Запрашиваем непрочитанные сообщения
     updateUnreadCount();
 
+    // Периодически обновляем счетчик непрочитанных (каждые 5 секунд)
+    const unreadInterval = setInterval(() => {
+      updateUnreadCount();
+    }, 5000);
+
     return () => {
       disconnectSocket();
+      clearInterval(unreadInterval);
     };
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && messages.length > 0) {
-      scrollToBottom();
-      // Помечаем сообщения как прочитанные при открытии
-      if (chat && unreadCount > 0) {
-        markAsRead();
+    if (isOpen) {
+      // Обновляем счетчик непрочитанных при открытии чата
+      updateUnreadCount();
+      if (messages.length > 0) {
+        scrollToBottom();
+        // Помечаем сообщения как прочитанные при открытии
+        if (chat && unreadCount > 0) {
+          markAsRead();
+        }
       }
     }
-  }, [isOpen, messages]);
+  }, [isOpen, messages, chat, unreadCount]);
 
   const loadChat = async () => {
     try {
@@ -78,6 +92,8 @@ function SupportChat() {
       setChat(data.chat);
       setMessages(data.messages || []);
       setLoading(false);
+      // Обновляем счетчик непрочитанных после загрузки чата
+      await updateUnreadCount();
     } catch (error) {
       console.error('Error loading chat:', error);
       setLoading(false);

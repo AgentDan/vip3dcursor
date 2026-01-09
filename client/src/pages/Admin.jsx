@@ -105,9 +105,16 @@ function Admin() {
   };
 
   const handleSelectChat = (chat) => {
+    // Если кликаем на тот же чат - просто перезагружаем сообщения
+    if (selectedChat?._id === chat._id) {
+      loadChatHistory(chat._id);
+      markChatAsRead(chat._id);
+      return;
+    }
+    
     setSelectedChat(chat);
     selectedChatRef.current = chat;
-    setChatMessages([]);
+    setChatMessages([]); // Очищаем только при выборе нового чата
   };
 
   const handleSendChatMessage = async (e) => {
@@ -214,8 +221,11 @@ function Admin() {
     if (selectedChat && activeTab === 'chat') {
       loadChatHistory(selectedChat._id);
       markChatAsRead(selectedChat._id);
+    } else {
+      // Если чат не выбран, очищаем сообщения
+      setChatMessages([]);
     }
-  }, [selectedChat, activeTab]);
+  }, [selectedChat?._id, activeTab]);
 
   useEffect(() => {
     if (chatMessages.length > 0) {
